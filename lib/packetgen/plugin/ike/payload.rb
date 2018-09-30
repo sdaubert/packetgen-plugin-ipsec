@@ -19,6 +19,15 @@ module PacketGen
       # to which a {#content} field is added to handle content of unknown payload types.
       # @author Sylvain Daubert
       class Payload < PacketGen::Header::Base
+        # Give protocol name
+        # @return [String]
+        def self.protocol_name
+          return @protocol_name if @protocol_name
+
+          basename = to_s.sub(/.*::/, '')
+          @protocol_name = "IKE::#{basename}"
+        end
+
         # @!attribute next
         #  8-bit next payload
         #  @return [Integer]
@@ -76,13 +85,6 @@ module PacketGen
           # Here, #body is next payload, so body size should not be taken in
           # account (payload's real body is #content).
           self[:length].value = sz - body.sz
-        end
-
-        def protocol_name
-          return @protocol_name if @protocol_name
-
-          basename = self.class.to_s.sub(/.*::/, '')
-          @protocol_name = "IKE::#{basename}"
         end
       end
     end
