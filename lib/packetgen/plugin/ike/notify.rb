@@ -177,6 +177,6 @@ module PacketGen
       end
     end
 
-    Header.add_class IKE::Nonce
+    Header.add_class IKE::Notify
   end
 end

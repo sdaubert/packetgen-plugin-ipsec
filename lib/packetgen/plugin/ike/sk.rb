@@ -181,10 +181,10 @@ module PacketGen
           self[:body] = PacketGen::Types::String.new
 
           # Remove enciphered payloads from packet
-          id = Plugin_id(self)
-          if id < packet.Plugins.size - 1
-            (packet.Plugins.size - 1).downto(id + 1) do |index|
-              packet.Plugins.delete_at index
+          id = header_id(self)
+          if id < packet.headers.size - 1
+            (packet.headers.size - 1).downto(id + 1) do |index|
+              packet.headers.delete_at index
             end
           end
 
@@ -245,7 +245,7 @@ module PacketGen
             end
             klass = klass.nil? ? Payload : IKE.const_get(klass.first)
             firsth = klass.protocol_name
-            pkt = Packet.parse(payloads, first_Plugin: firsth)
+            pkt = Packet.parse(payloads, first_header: firsth)
             packet.encapsulate(pkt, parsing: true) unless pkt.nil?
           else
             self[:body].read payloads

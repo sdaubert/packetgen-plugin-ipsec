@@ -77,6 +77,13 @@ module PacketGen
           # account (payload's real body is #content).
           self[:length].value = sz - body.sz
         end
+
+        def protocol_name
+          return @protocol_name if @protocol_name
+
+          basename = self.class.to_s.sub(/.*::/, '')
+          @protocol_name = "IKE::#{basename}"
+        end
       end
     end
 
@@ -84,7 +91,6 @@ module PacketGen
   end
 end
 
-# here, future payloads to be required
 require_relative 'sa'
 require_relative 'ke'
 require_relative 'nonce'

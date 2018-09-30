@@ -362,19 +362,19 @@ module PacketGen
         when 41  # IPv6
           pkt = Packet.parse(body, first_header: 'IPv6')
           encap_length = pkt.ipv6.length + pkt.ipv6.sz
-        when ICMP::IP_PROTOCOL
+        when PacketGen::Header::ICMP::IP_PROTOCOL
           pkt = Packet.parse(body, first_header: 'ICMP')
           # no size field. cannot recover TFC padding
           encap_length = body.sz
-        when UDP::IP_PROTOCOL
+        when PacketGen::Header::UDP::IP_PROTOCOL
           pkt = Packet.parse(body, first_header: 'UDP')
           encap_length = pkt.udp.length
-        when TCP::IP_PROTOCOL
+        when PacketGen::Header::TCP::IP_PROTOCOL
           # No length in TCP header, so TFC may not be used.
           # Or underlayer protocol should have a size information...
           pkt = Packet.parse(body, first_header: 'TCP')
           encap_length = pkt.sz
-        when ICMPv6::IP_PROTOCOL
+        when PacketGen::Header::ICMPv6::IP_PROTOCOL
           pkt = Packet.parse(body, first_header: 'ICMPv6')
           # no size field. cannot recover TFC padding
           encap_length = body.sz
