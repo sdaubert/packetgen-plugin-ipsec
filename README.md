@@ -1,5 +1,7 @@
 # packetgen-plugin-ipsec
 
+**Warning:** this repository is a work-in-progress. It will be available with packetgen3.
+
 This is a plugin for [PacketGen gem](https://github.com/sdaubert/packetgen). It adds two protocols:
 
 * `PacketGen::Plugin::ESP`: IP Encapsulating Security Payload ([RFC 4303](https://tools.ietf.org/html/rfc4303)),
