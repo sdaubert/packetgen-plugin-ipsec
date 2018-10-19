@@ -85,7 +85,7 @@ module PacketGen
                 expect(str).to match(/^\s+hashes/)
                 expect(str).to include('"' + 'a' * 20 + '","'  + 'b' * 20 + '"')
               end
-             end
+            end
           end
         end
       end
