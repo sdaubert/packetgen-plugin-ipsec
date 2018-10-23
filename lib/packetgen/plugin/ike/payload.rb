@@ -22,7 +22,7 @@ module PacketGen
         # Give protocol name
         # @return [String]
         def self.protocol_name
-          return @protocol_name if @protocol_name
+          return @protocol_name if defined? @protocol_name
 
           basename = to_s.sub(/.*::/, '')
           @protocol_name = "IKE::#{basename}"

@@ -47,6 +47,8 @@ module PacketGen
           end
         end
 
+        undef length, value
+
         # @return [Integer]
         def length
           tv_format? ? 4 : self[:length].to_i
@@ -242,6 +244,8 @@ module PacketGen
           self.id = options[:id] if options[:id]
         end
 
+        undef id=
+
         # Set transform ID
         # @param [Integer,String] value
         # @return [Integer]
@@ -411,6 +415,8 @@ module PacketGen
           self[:length].value = sz unless options[:length]
           self.protocol = options[:protocol] if options[:protocol]
         end
+
+        undef protocol=
 
         # Set protocol
         # @param [Integer,String] value

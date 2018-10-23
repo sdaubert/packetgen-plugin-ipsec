@@ -45,7 +45,7 @@ module PacketGen::Plugin
     def authenticate!
       @conf.final
       if @intg
-        @intg.update @esn.to_s if @esn
+        @intg.update @esn.to_s if defined? @esn
         @intg.digest[0, @icv_length] == @icv
       else
         true

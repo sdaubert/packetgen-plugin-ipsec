@@ -88,6 +88,8 @@ module PacketGen
           super
         end
 
+        undef type=, protocol=
+
         # Set type
         # @param [Integer,String] value
         # @return [Integer]
