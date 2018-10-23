@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/sdaubert/packetgen-plugin-ipsec.svg?branch=master)](https://travis-ci.com/sdaubert/packetgen-plugin-ipsec)
+
 # packetgen-plugin-ipsec
 
 **Warning:** this repository is a work-in-progress. It will be available with packetgen3.
