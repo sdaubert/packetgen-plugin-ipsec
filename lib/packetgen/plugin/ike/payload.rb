@@ -43,7 +43,7 @@ module PacketGen
         # @!attribute content
         #  Payload content. Depends on payload. Variable length.
         #  @return [String]
-        define_field :content, PacketGen::Types::String
+        define_field :content, PacketGen::Types::String, builder: ->(h, t) { t.new(length_from: -> { h.length - h.offset_of(:content) }) }
 
         # Defining a body permits using Packet#parse to parse next IKE payloads.
         define_field :body, PacketGen::Types::String
@@ -58,25 +58,8 @@ module PacketGen
 
         def initialize(options={})
           super
-          self[:length].value = sz unless options[:length]
-        end
-
-        # @private
-        alias base_read read
-
-        # Populate object from a string
-        # @param [String] str
-        # @return [self]
-        def read(str)
-          base_read str
-          unless self[:content].nil?
-            content_length = length - self.class.new.sz
-            if content_length >= 0
-              self[:body] = self[:content][content_length..-1]
-              self[:content] = self[:content][0, content_length]
-            end
-          end
-          self
+          self[:content].replace(options[:content]) if options[:content]
+          calc_length unless options[:length]
         end
 
         # Compute length and set {#length} field
@@ -84,7 +67,7 @@ module PacketGen
         def calc_length
           # Here, #body is next payload, so body size should not be taken in
           # account (payload's real body is #content).
-          self[:length].value = sz - self[:body].sz
+          self.length = sz - self[:body].sz
         end
       end
     end

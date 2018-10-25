@@ -36,7 +36,7 @@ module PacketGen
         # @!attribute value
         #  attribute value
         #  @return [Integer]
-        define_field :value, PacketGen::Types::Int32
+        define_field :value, PacketGen::Types::Int32, optional: ->(h) { !h.tv_format? }
 
         def initialize(options={})
           super
@@ -57,26 +57,6 @@ module PacketGen
         # @return [Integer]
         def value
           tv_format? ? self[:length].to_i : self[:value].to_i
-        end
-
-        # Populate object from a string
-        # @param [String] str
-        # @return [self]
-        def read(str)
-          return self if str.nil?
-          force_binary str
-          self[:type].read str[0, 2]
-          self[:length].read str[2, 2]
-          self[:value].read str[4, 4] unless tv_format?
-          self
-        end
-
-        # Get binary string
-        # @return [String]
-        def to_s
-          str = self[:type].to_s + self[:length].to_s
-          str << self[:value].to_s unless tv_format?
-          str
         end
 
         # Get a human readable string
@@ -215,7 +195,7 @@ module PacketGen
         #  @return [Integer]
         define_field :rsv1, PacketGen::Types::Int8
         # @!attribute length
-        #  16-bit proposal length
+        #  16-bit transform length
         #  @return [Integer]
         define_field :length, PacketGen::Types::Int16
         # @!attribute [r] type
@@ -235,7 +215,7 @@ module PacketGen
         # @!attribute attributes
         #  Set of attributes for this transform
         #  @return [Attributes]
-        define_field :attributes, Attributes
+        define_field :attributes, Attributes, builder: ->(h, t) { t.new(length_from: -> { h.length - h.offset_of(:attributes) }) }
 
         def initialize(options={})
           super
@@ -259,17 +239,6 @@ module PacketGen
                end
           raise ArgumentError, "unknown ID #{value.inspect}" unless id
           self[:id].value = id
-        end
-
-        # Populate object from a string
-        # @param [String] str
-        # @return [self]
-        def read(str)
-          super
-          hlen = self.class.new.sz
-          attr_len = length - hlen
-          attributes.read(str[hlen, attr_len])
-          self
         end
 
         # Compute length and set {#length} field
@@ -416,17 +385,6 @@ module PacketGen
           self.protocol = options[:protocol] if options[:protocol]
         end
 
-        # Populate object from a string
-        # @param [String] str
-        # @return [self]
-        def read(str)
-          super
-          hlen = self.class.new.sz + spi_size
-          tlen = length - hlen
-          transforms.read(str[hlen, tlen])
-          self
-        end
-
         # Compute length and set {#length} field
         # @return [Integer] new length
         def calc_length
@@ -520,19 +478,7 @@ module PacketGen
         # @!attribute proposals
         #  Set of SA proposals
         #  @return [SAProposals]
-        define_field_before :body, :proposals, SAProposals
-
-        # Populate object from a string
-        # @param [String] str
-        # @return [self]
-        def read(str)
-          super
-          hlen = self.class.new.sz
-          plen = length - hlen
-          proposals.read str[hlen, plen]
-          self[:body].read str[hlen + plen..-1]
-          self
-        end
+        define_field_before :body, :proposals, SAProposals, builder: ->(h, t) { t.new(length_from: -> { h.length - h.offset_of(:proposals) }) }
 
         # Compute length and set {#length} field
         # @return [Integer] new length

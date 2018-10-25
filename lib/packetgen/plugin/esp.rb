@@ -138,6 +138,7 @@ module PacketGen
       # @return [self]
       def read(str)
         return self if str.nil?
+
         force_binary str
         self[:spi].read str[0, 4]
         self[:sn].read str[4, 4]

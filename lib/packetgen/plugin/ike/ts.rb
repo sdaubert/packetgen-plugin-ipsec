@@ -240,18 +240,6 @@ module PacketGen
                             builder: ->(h, t) { t.new(counter: h[:num_ts]) }
         alias selectors traffic_selectors
 
-        # Populate object from a string
-        # @param [String] str
-        # @return [self]
-        def read(str)
-          super(str[0, 8])
-          hlen = self.class.new.sz
-          tslen = length - hlen
-          selectors.read str[hlen, tslen]
-          self[:body].read str[hlen + tslen..-1]
-          self
-        end
-
         # Compute length and set {#length} field
         # @return [Integer] new length
         def calc_length
