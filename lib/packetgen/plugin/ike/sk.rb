@@ -99,16 +99,16 @@ module PacketGen
 
           case confidentiality_mode
           when 'gcm'
-            iv = self.content.slice!(0, 8)
+            iv = self[:content].slice!(0, 8)
             real_iv = force_binary(opt[:salt]) + iv
           when 'cbc'
             cipher.padding = 0
-            real_iv = iv = self.content.slice!(0, 16)
+            real_iv = iv = self[:content].slice!(0, 16)
           when 'ctr'
-            iv = self.content.slice!(0, 8)
+            iv = self[:content].slice!(0, 8)
             real_iv = force_binary(opt[:salt]) + iv + [1].pack('N')
           else
-            real_iv = iv = self.content.slice!(0, 16)
+            real_iv = iv = self[:content].slice!(0, 16)
           end
           cipher.iv = real_iv
 
@@ -117,7 +117,7 @@ module PacketGen
               @icv_length = opt[:icv_length].to_i if opt[:icv_length]
               raise ParseError, 'unknown ICV size' if @icv_length.zero?
             end
-            icv = self.content.slice!(-@icv_length, @icv_length)
+            icv = self[:content].slice!(-@icv_length, @icv_length)
           end
 
           authenticate_if_needed iv, icv
@@ -158,12 +158,12 @@ module PacketGen
           else
             pad_length = cipher.block_size
             pad_length = 16 if cipher.block_size == 1 # Some AES mode returns 1...
-            pad_length -= (self.body.sz + iv.size + 1) % cipher.block_size
+            pad_length -= (self[:body].sz + iv.size + 1) % cipher.block_size
             pad_length = 0 if pad_length == 16
             padding = force_binary(opt[:padding] || ([0] * pad_length).pack('C*'))
             padding = padding[0, pad_length]
           end
-          msg = self.body.to_s + padding + PacketGen::Types::Int8.new(pad_length).to_s
+          msg = self[:body].to_s + padding + PacketGen::Types::Int8.new(pad_length).to_s
           encrypted_msg = encipher(msg)
           cipher.final # message is already padded. No need for mode padding
 
@@ -214,10 +214,10 @@ module PacketGen
         # Encrypted Payload (i.e., the fourth octet of the Encrypted Payload).
         def get_ad
           str = packet.ike.to_s[0, IKE.new.sz]
-          current_payload = packet.ike.body
+          current_payload = packet.ike[:body]
           until current_payload.is_a? SK
-            str << current_payload.to_s[0, current_payload.length]
-            current_payload = current_payload.body
+            str << current_payload.to_s[0, current_payload.to_s.length]
+            current_payload = current_payload[:body]
           end
           str << self.to_s[0, SK.new.sz]
         end
@@ -226,7 +226,7 @@ module PacketGen
           # decrypt
           plain_msg = decipher(content.to_s)
           # Remove cipher text
-          self.content.read ''
+          self[:content].read ''
 
           # check authentication tag
           if authenticated?

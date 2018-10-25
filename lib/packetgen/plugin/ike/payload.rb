@@ -84,7 +84,7 @@ module PacketGen
         def calc_length
           # Here, #body is next payload, so body size should not be taken in
           # account (payload's real body is #content).
-          self[:length].value = sz - body.sz
+          self[:length].value = sz - self[:body].sz
         end
       end
     end

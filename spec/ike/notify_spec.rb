@@ -10,7 +10,7 @@ module PacketGen
             expect(notify.next).to eq(0)
             expect(notify.flags).to eq(0)
             expect(notify.length).to eq(8)
-            expect(notify.protocol).to eq(0)
+            expect(notify.protocol).to eq(1)
             expect(notify.spi_size).to eq(0)
             expect(notify.type).to eq(0)
             expect(notify.spi).to be_empty
@@ -59,12 +59,12 @@ module PacketGen
           it 'accepts Integer' do
             expect { notify.protocol = 43 }.to_not raise_error
             expect(notify.protocol).to eq(43)
-            expect(notify.human_protocol).to eq('proto 43')
+            expect(notify.human_protocol).to eq('<unknown:43>')
           end
 
           it 'accepts String' do
             expect { notify.protocol = 'ESP' }.to_not raise_error
-            expect(notify.protocol).to eq(IKE::PROTO_ESP)
+            expect(notify.protocol).to eq(IKE::PROTOCOLS['ESP'])
             expect(notify.human_protocol).to eq('ESP')
           end
 

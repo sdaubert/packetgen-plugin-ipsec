@@ -190,7 +190,7 @@ module PacketGen
 
         case confidentiality_mode
         when 'cbc'
-          cipher_len = self.body.sz + 2
+          cipher_len = self[:body].sz + 2
           self.pad_length = (16 - (cipher_len % 16)) % 16
         else
           mod4 = to_s.size % 4
@@ -208,7 +208,7 @@ module PacketGen
 
         tfc = ''
         if opt[:tfc]
-          tfc_size = opt[:tfc_size] - body.sz
+          tfc_size = opt[:tfc_size] - self[:body].sz
           if tfc_size > 0
             tfc_size = case confidentiality_mode
                        when 'cbc'
@@ -220,7 +220,7 @@ module PacketGen
           end
         end
 
-        msg = self.body.to_s + tfc
+        msg = self[:body].to_s + tfc
         msg += self[:padding].to_s + self[:pad_length].to_s + self[:next].to_s
         enc_msg = encipher(msg)
         # as padding is used to pad for CBC mode, this is unused
@@ -267,16 +267,16 @@ module PacketGen
 
         case confidentiality_mode
         when 'gcm'
-          iv = self.body.slice!(0, 8)
+          iv = self[:body].slice!(0, 8)
           real_iv = opt[:salt] + iv
         when 'cbc'
           cipher.padding = 0
-          real_iv = iv = self.body.slice!(0, 16)
+          real_iv = iv = self[:body].slice!(0, 16)
         when 'ctr'
-          iv = self.body.slice!(0, 8)
+          iv = self[:body].slice!(0, 8)
           real_iv = opt[:salt] + iv + [1].pack('N')
         else
-          real_iv = iv = self.body.slice!(0, 16)
+          real_iv = iv = self[:body].slice!(0, 16)
         end
         cipher.iv = real_iv
 
@@ -284,7 +284,7 @@ module PacketGen
           raise ParseError, 'unknown ICV size' unless opt[:icv_length]
           @icv_length = opt[:icv_length].to_i
           # reread ESP to handle new ICV size
-          msg = self.body.to_s + self[:pad_length].to_s
+          msg = self[:body].to_s + self[:pad_length].to_s
           msg += self[:next].to_s
           self[:icv].read msg.slice!(-@icv_length, @icv_length)
           self[:body].read msg[0..-3]
@@ -292,7 +292,7 @@ module PacketGen
           self[:next].read msg[-1]
         end
 
-        authenticate_esp_header_if_needed options, iv, self[:icv]
+        authenticate_esp_header_if_needed options, iv, icv
         private_decrypt opt
       end
 
@@ -333,13 +333,11 @@ module PacketGen
       def private_decrypt(options)
         # decrypt
         msg = self.body.to_s
-        msg += self[:padding].to_s + self[:pad_length].to_s + self[:next].to_s
+        msg += self.padding + self[:pad_length].to_s + self[:next].to_s
         plain_msg = decipher(msg)
 
         # check authentication tag
-        if authenticated?
-          return false unless authenticate!
-        end
+        return false if authenticated? && !authenticate!
 
         # Set ESP fields
         self[:body].read plain_msg[0..-3]
@@ -349,7 +347,7 @@ module PacketGen
         # Set padding
         if self.pad_length > 0
           len = self.pad_length
-          self[:padding].read self.body.slice!(-len, len)
+          self[:padding].read self[:body].slice!(-len, len)
         end
 
         # Set TFC padding
@@ -365,7 +363,7 @@ module PacketGen
         when PacketGen::Header::ICMP::IP_PROTOCOL
           pkt = Packet.parse(body, first_header: 'ICMP')
           # no size field. cannot recover TFC padding
-          encap_length = body.sz
+          encap_length = self[:body].sz
         when PacketGen::Header::UDP::IP_PROTOCOL
           pkt = Packet.parse(body, first_header: 'UDP')
           encap_length = pkt.udp.length
@@ -377,15 +375,15 @@ module PacketGen
         when PacketGen::Header::ICMPv6::IP_PROTOCOL
           pkt = Packet.parse(body, first_header: 'ICMPv6')
           # no size field. cannot recover TFC padding
-          encap_length = body.sz
+          encap_length = self[:body].sz
         else
           # Unmanaged encapsulated protocol
-          encap_length = body.sz
+          encap_length = self[:body].sz
         end
 
-        if encap_length < body.sz
-          tfc_len = body.sz - encap_length
-          self[:tfc].read self.body.slice!(encap_length, tfc_len)
+        if encap_length < self[:body].sz
+          tfc_len = self[:body].sz - encap_length
+          self[:tfc].read self[:body].slice!(encap_length, tfc_len)
         end
 
         if options[:parse]

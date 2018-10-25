@@ -70,9 +70,9 @@ module PacketGen
           select_addr options
           self[:start_addr].from_human(options[:start_addr]) if options[:start_addr]
           self[:end_addr].from_human(options[:end_addr]) if options[:end_addr]
-          self[:length].value = sz unless options[:length]
           self.type = options[:type] if options[:type]
           self.protocol = options[:protocol] if options[:protocol]
+          self[:length].value = sz unless options[:length]
 
           return unless options[:ports]
           self.start_port = options[:ports].begin
@@ -248,7 +248,7 @@ module PacketGen
           hlen = self.class.new.sz
           tslen = length - hlen
           selectors.read str[hlen, tslen]
-          body.read str[hlen + tslen..-1]
+          self[:body].read str[hlen + tslen..-1]
           self
         end
 

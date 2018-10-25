@@ -343,18 +343,18 @@ module PacketGen
 
             cipher = get_cipher('gcm', :decrypt, key)
             expect(pkt.esp.decrypt!(cipher, salt: salt, parse: false)).to be(true)
-            expect(pkt.esp.body).to be_a(Types::String)
+            expect(pkt.esp[:body]).to be_a(Types::String)
           end
 
           it 'returns false when ICV check failed' do
             pkt, = get_packets_from('esp4-ctr-hmac.pcapng', icv_length: 12)
             cipher = get_cipher('ctr', :decrypt, key)
             hmac = OpenSSL::HMAC.new(hmac_key, OpenSSL::Digest::SHA256.new)
-            pkt.esp.icv[-1] = "\x00"
+            pkt.esp[:icv][-1] = "\x00"
             expect(pkt.esp.decrypt!(cipher, salt: salt, intmode: hmac)).to be(false)
 
             pkt, = get_packets_from('esp4-gcm.pcapng', icv_length: 16)
-            pkt.esp.body[16] = "\x00"
+            pkt.esp[:body][16] = "\x00"
             cipher = get_cipher('gcm', :decrypt, key)
             expect(pkt.esp.decrypt!(cipher, salt: salt)).to be(false)
           end
@@ -399,7 +399,7 @@ module PacketGen
           pkt.body.read("\x00" * 16)
           str = pkt.to_s
           pkt2 = Packet.parse(str)
-          expect(pkt2.udp.body).to be_a(Types::String)
+          expect(pkt2.udp[:body]).to be_a(Types::String)
         end
       end
     end

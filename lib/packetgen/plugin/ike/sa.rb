@@ -239,9 +239,9 @@ module PacketGen
 
         def initialize(options={})
           super
-          self[:length].value = sz unless options[:length]
           self.type = options[:type] if options[:type]
           self.id = options[:id] if options[:id]
+          self[:length].value = sz unless options[:length]
         end
 
         undef id=
@@ -387,7 +387,7 @@ module PacketGen
         #  8-bit protocol ID. Specify IPsec protocol currently negociated.
         #  May 1 (IKE), 2 (AH) or 3 (ESP).
         #  @return [Integer]
-        define_field :protocol, PacketGen::Types::Int8
+        define_field :protocol, PacketGen::Types::Int8Enum, enum: PROTOCOLS
         # @!attribute spi_size
         #  8-bit SPI size. Give size of SPI field. Set to 0 for an initial IKE SA
         #  negotiation, as SPI is obtained from outer Plugin.
@@ -412,25 +412,8 @@ module PacketGen
             options[:spi_size] = options[:spi].size
           end
           super
-          self[:length].value = sz unless options[:length]
+          self.length = sz unless options[:length]
           self.protocol = options[:protocol] if options[:protocol]
-        end
-
-        undef protocol=
-
-        # Set protocol
-        # @param [Integer,String] value
-        # @return [Integer]
-        def protocol=(value)
-          proto = case value
-                  when Integer
-                    value
-                  else
-                    c = IKE.constants.grep(/PROTO_#{value}/).first
-                    c ? IKE.const_get(c) : nil
-                  end
-          raise ArgumentError, "unknown protocol #{value.inspect}" unless proto
-          self[:protocol].value = proto
         end
 
         # Populate object from a string
@@ -467,9 +450,7 @@ module PacketGen
         # Get protocol name
         # @return [String]
         def human_protocol
-          name = IKE.constants.grep(/PROTO/)
-                    .detect { |c| IKE.const_get(c) == protocol } || "proto #{protocol}"
-          name.to_s.sub(/PROTO_/, '')
+          self[:protocol].to_human
         end
 
         # Say if this proposal is the last one (from {#last} field)
@@ -549,7 +530,7 @@ module PacketGen
           hlen = self.class.new.sz
           plen = length - hlen
           proposals.read str[hlen, plen]
-          body.read str[hlen + plen..-1]
+          self[:body].read str[hlen + plen..-1]
           self
         end
 

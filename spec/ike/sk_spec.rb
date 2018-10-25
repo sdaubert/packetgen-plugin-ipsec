@@ -90,13 +90,13 @@ module PacketGen
             end
 
             it 'returns false on bad ICV' do
-              cbc_pkt.ike_sk.content[-17] = force_binary("\xff")
+              cbc_pkt.ike_sk[:content][-17] = force_binary("\xff")
               cbc_pkt.ike_sk.icv_length = 16
               expect(cbc_pkt.ike_sk.decrypt! cbc_cipher, intmode: hmac).to be(false)
             end
 
             it 'returns false on bad ICV (combined mode)' do
-              gcm_pkt.ike_sk.content[-1] = force_binary("\xff")
+              gcm_pkt.ike_sk[:content][-1] = force_binary("\xff")
               gcm_pkt.ike_sk.icv_length = 16
               expect(gcm_pkt.ike_sk.decrypt! gcm_cipher, salt: gcm_sk_ei[32..35]).
                 to be(false)

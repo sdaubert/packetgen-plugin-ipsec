@@ -210,7 +210,7 @@ module PacketGen
             expect(prop.reserved).to eq(0)
             expect(prop.length).to eq(8)
             expect(prop.num).to eq(1)
-            expect(prop.protocol).to eq(0)
+            expect(prop.protocol).to eq(1)
             expect(prop.spi_size).to eq(0)
             expect(prop.num_trans).to eq(0)
             expect(prop.spi).to be_empty

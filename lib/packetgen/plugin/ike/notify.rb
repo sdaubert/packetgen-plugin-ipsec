@@ -94,7 +94,7 @@ module PacketGen
         #  CHILD_SA_NOT_FOUND.  If the SPI field is empty, this field MUST be
         #  sent as zero and MUST be ignored on receipt.
         #  @return [Integer]
-        define_field_before :content, :protocol, PacketGen::Types::Int8
+        define_field_before :content, :protocol, PacketGen::Types::Int8Enum, enum: PROTOCOLS
         # @!attribute spi_size
         #  8-bit SPI size. Give size of SPI field. Length in octets of the SPI as
         #  defined by the IPsec protocol ID or zero if no SPI is applicable. For a
@@ -123,22 +123,7 @@ module PacketGen
           super
           self.protocol = options[:protocol] if options[:protocol]
           self.message_type = options[:message_type] if options[:message_type]
-          self.type = options[:type] if options[:type]
-        end
-
-        # Set protocol
-        # @param [Integer,String] value
-        # @return [Integer]
-        def protocol=(value)
-          proto = case value
-                  when Integer
-                    value
-                  else
-                    c = IKE.constants.grep(/PROTO_#{value}/).first
-                    c ? IKE.const_get(c) : nil
-                  end
-          raise ArgumentError, "unknown protocol #{value.inspect}" unless proto
-          self[:protocol].value = proto
+          self.message_type = options[:type] if options[:type]
         end
 
         alias type= message_type=
@@ -146,9 +131,7 @@ module PacketGen
         # Get protocol name
         # @return [String]
         def human_protocol
-          name = IKE.constants.grep(/PROTO/)
-                    .detect { |c| IKE.const_get(c) == protocol } || "proto #{protocol}"
-          name.to_s.sub(/PROTO_/, '')
+          self[:protocol].to_human
         end
 
         # Get message type name

@@ -77,9 +77,11 @@ module PacketGen
       # Well-known UDP port for IKE when NAT is detected
       UDP_PORT2 = 4500
 
-      PROTO_IKE = 1
-      PROTO_AH  = 2
-      PROTO_ESP = 3
+      PROTOCOLS = {
+        'IKE' => 1,
+        'AH'  => 2,
+        'ESP' => 3
+      }.freeze
 
       EXCHANGE_TYPES = {
         'IKE_SA_INIT'     => 34,
