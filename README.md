@@ -1,3 +1,4 @@
+[![Gem Version](https://badge.fury.io/rb/packetgen-plugin-ipsec.svg)](https://badge.fury.io/rb/packetgen-plugin-ipsec)
 [![Build Status](https://travis-ci.com/sdaubert/packetgen-plugin-ipsec.svg?branch=master)](https://travis-ci.com/sdaubert/packetgen-plugin-ipsec)
 
 # packetgen-plugin-ipsec
