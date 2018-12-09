@@ -10,7 +10,7 @@ module PacketGen
             expect(auth.next).to eq(0)
             expect(auth.flags).to eq(0)
             expect(auth.length).to eq(8)
-            expect(auth.method).to eq(1)
+            expect(auth.auth_method).to eq(1)
             expect(auth.content).to be_empty
           end
 
@@ -19,7 +19,7 @@ module PacketGen
               next: 59,
               flags: 0x65,
               length: 128,
-              method: 0xf0,
+              auth_method: 0xf0,
               content: 'abcdefghij'
             }
 
@@ -39,36 +39,36 @@ module PacketGen
             expect(auth.critical?).to be(true)
             expect(auth.hreserved).to eq(0)
             expect(auth.length).to eq(18)
-            expect(auth.method).to eq(14)
+            expect(auth.auth_method).to eq(14)
             expect(auth.reserved).to eq(0xC00003)
-            expect(auth.human_method).to eq('DIGITAL_SIGNATURE')
+            expect(auth.human_auth_method).to eq('DIGITAL_SIGNATURE')
             expect(auth.content).to eq('abcdefghij')
           end
         end
 
-        describe '#method=' do
+        describe '#auth_method=' do
           let(:auth)  { Auth.new }
 
           it 'accepts Integer' do
-            expect { auth.method = 10 }.to_not raise_error
-            expect(auth.method).to eq(10)
-            expect(auth.human_method).to eq('ECDSA384')
+            expect { auth.auth_method = 10 }.to_not raise_error
+            expect(auth.auth_method).to eq(10)
+            expect(auth.human_auth_method).to eq('ECDSA384')
           end
 
           it 'accepts String' do
-            expect { auth.method = 'ECDSA384' }.to_not raise_error
-            expect(auth.method).to eq(Auth::METHODS['ECDSA384'])
-            expect(auth.human_method).to eq('ECDSA384')
+            expect { auth.auth_method = 'ECDSA384' }.to_not raise_error
+            expect(auth.auth_method).to eq(Auth::METHODS['ECDSA384'])
+            expect(auth.human_auth_method).to eq('ECDSA384')
           end
 
           it 'raises on unknown method (String only)' do
-            expect { auth.method = 'READ_ERROR' }.to raise_error(ArgumentError)
+            expect { auth.auth_method = 'READ_ERROR' }.to raise_error(ArgumentError)
           end
         end
 
         describe '#to_s' do
           it 'returns a binary string' do
-            auth = Auth.new(next: 2, method: 'PASSWORD', content: 'abcd')
+            auth = Auth.new(next: 2, auth_method: 'PASSWORD', content: 'abcd')
             auth.calc_length
             expected = "\x02\x00\x00\x0c\x0c\x00\x00\x00abcd"
             expect(auth.to_s).to eq(force_binary expected)

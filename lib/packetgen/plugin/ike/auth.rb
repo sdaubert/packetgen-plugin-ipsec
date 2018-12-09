@@ -31,7 +31,7 @@ module PacketGen
       #
       # == Create a KE payload
       #   # create a IKE packet with a Auth payload
-      #   pkt = PacketGen.gen('IP').add('UDP').add('IKE').add('IKE::Auth', method: 'SHARED_KEY')
+      #   pkt = PacketGen.gen('IP').add('UDP').add('IKE').add('IKE::Auth', auth_method: 'SHARED_KEY')
       #   pkt.calc_length
       # @author Sylvain Daubert
       class Auth < Payload
@@ -50,10 +50,10 @@ module PacketGen
           'DIGITAL_SIGNATURE' => 14
         }.freeze
 
-        # @attribute [r] method
+        # @attribute [r] auth_method
         #   8-bit Auth Method
         #   @return [Integer]
-        define_field_before :content, :method, PacketGen::Types::Int8Enum, enum: METHODS
+        define_field_before :content, :auth_method, PacketGen::Types::Int8Enum, enum: METHODS
         # @attribute reserved
         #   24-bit reserved field
         #   @return [Integer]
@@ -81,7 +81,7 @@ module PacketGen
           id = packet.ike.flag_i? ? packet.ike_idi : packet.ike_idr
           signed_octets << prf(prf, sk_p, id.to_s[4, id.length - 4])
 
-          case method
+          case auth_method
           when METHODS['SHARED_KEY']
             auth  = prf(prf(shared_secret, 'Key Pad for IKEv2'), signed_octets)
             auth == content
@@ -118,14 +118,14 @@ module PacketGen
           when METHOD_NULL
             true
           else
-            raise NotImplementedError, "unsupported method #{human_method}"
+            raise NotImplementedError, "unsupported auth method #{human_auth_method}"
           end
         end
 
         # Get authentication method name
         # @return [String]
-        def human_method
-          self[:method].to_human
+        def human_auth_method
+          self[:auth_method].to_human
         end
 
         private
