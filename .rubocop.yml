@@ -1,4 +1,9 @@
-TargetRubyVersion: 2.3
+require:
+  - rubocop-performance
+AllCops:
+  TargetRubyVersion: 2.3
+Layout/LineLength:
+  Max: 150
 Layout/SpaceAroundEqualsInParameterDefault:
   EnforcedStyle: no_space
 Lint/EmptyWhen:
@@ -9,6 +14,8 @@ Metrics:
   Enabled: false
 Style/AsciiComments:
   Enabled: false
+Style/ClassAndModuleChildren:
+  EnforcedStyle: compact
 Style/Encoding:
   Enabled: false
 Style/EvalWithLocation:

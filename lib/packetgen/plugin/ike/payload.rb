@@ -5,75 +5,73 @@
 
 # frozen_string_literal: true
 
-module PacketGen
-  module Plugin
-    class IKE
-      # PacketGen::Header::Base class for IKE payloads. This class may also be used for unknown payloads.
-      #
-      # This class handles generic IKE payload Plugin:
-      #                        1                   2                   3
-      #    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-      #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      #   | Next Payload  |C|  RESERVED   |         Payload Length        |
-      #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-      # to which a {#content} field is added to handle content of unknown payload types.
-      # @author Sylvain Daubert
-      class Payload < PacketGen::Header::Base
-        # Give protocol name
-        # @return [String]
-        def self.protocol_name
-          return @protocol_name if defined? @protocol_name
+module PacketGen::Plugin
+  class IKE
+    # PacketGen::Header::Base class for IKE payloads. This class may also be used for unknown payloads.
+    #
+    # This class handles generic IKE payload Plugin:
+    #                        1                   2                   3
+    #    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+    #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    #   | Next Payload  |C|  RESERVED   |         Payload Length        |
+    #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    # to which a {#content} field is added to handle content of unknown payload types.
+    # @author Sylvain Daubert
+    class Payload < PacketGen::Header::Base
+      # Give protocol name
+      # @return [String]
+      def self.protocol_name
+        return @protocol_name if defined? @protocol_name
 
-          basename = to_s.sub(/.*::/, '')
-          @protocol_name = "IKE::#{basename}"
-        end
+        basename = to_s.sub(/.*::/, '')
+        @protocol_name = "IKE::#{basename}"
+      end
 
-        # @!attribute next
-        #  8-bit next payload
-        #  @return [Integer]
-        define_field :next, PacketGen::Types::Int8
-        # @!attribute flags
-        #  8-bit flags
-        #  @return [Integer]
-        define_field :flags, PacketGen::Types::Int8
-        # @!attribute length
-        #  16-bit payload total length, including generic payload Plugin
-        #  @return [Integer]
-        define_field :length, PacketGen::Types::Int16
-        # @!attribute content
-        #  Payload content. Depends on payload. Variable length.
-        #  @return [String]
-        define_field :content, PacketGen::Types::String, builder: ->(h, t) { t.new(length_from: -> { h.length - h.offset_of(:content) }) }
+      # @!attribute next
+      #  8-bit next payload
+      #  @return [Integer]
+      define_field :next, PacketGen::Types::Int8
+      # @!attribute flags
+      #  8-bit flags
+      #  @return [Integer]
+      define_field :flags, PacketGen::Types::Int8
+      # @!attribute length
+      #  16-bit payload total length, including generic payload Plugin
+      #  @return [Integer]
+      define_field :length, PacketGen::Types::Int16
+      # @!attribute content
+      #  Payload content. Depends on payload. Variable length.
+      #  @return [String]
+      define_field :content, PacketGen::Types::String, builder: ->(h, t) { t.new(length_from: -> { h.length - h.offset_of(:content) }) }
 
-        # Defining a body permits using Packet#parse to parse next IKE payloads.
-        define_field :body, PacketGen::Types::String
+      # Defining a body permits using Packet#parse to parse next IKE payloads.
+      define_field :body, PacketGen::Types::String
 
-        # @!attribute critical
-        #  critical flag
-        #  @return [Boolean]
-        # @!attribute hreserved
-        #  reserved part of {#flags} field
-        #  @return [Integer]
-        define_bit_fields_on :flags, :critical, :hreserved, 7
+      # @!attribute critical
+      #  critical flag
+      #  @return [Boolean]
+      # @!attribute hreserved
+      #  reserved part of {#flags} field
+      #  @return [Integer]
+      define_bit_fields_on :flags, :critical, :hreserved, 7
 
-        def initialize(options={})
-          super
-          self[:content].replace(options[:content]) if options[:content]
-          calc_length unless options[:length]
-        end
+      def initialize(options={})
+        super
+        self[:content].replace(options[:content]) if options[:content]
+        calc_length unless options[:length]
+      end
 
         # Compute length and set {#length} field
         # @return [Integer] new length
-        def calc_length
-          # Here, #body is next payload, so body size should not be taken in
-          # account (payload's real body is #content).
-          self.length = sz - self[:body].sz
-        end
+      def calc_length
+        # Here, #body is next payload, so body size should not be taken in
+        # account (payload's real body is #content).
+        self.length = sz - self[:body].sz
       end
     end
-
-    Header.add_class IKE::Payload
   end
+
+  PacketGen::Header.add_class IKE::Payload
 end
 
 require_relative 'sa'
