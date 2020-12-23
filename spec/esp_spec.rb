@@ -205,7 +205,7 @@ module PacketGen
             pkt = read_packets('esp-transport-esn.pcapng').last
             pkt.esp.icv_length = 16
             pkt.esp.read pkt.esp.to_s
-            expected_pkt = pkt.dup
+            expected_pkt_s = pkt.dup.to_s
 
             key = '70b20243dbeb17a81078db80f14adf5e098b32445e0e5529b903e5140ba5883d'
             key = [key].pack('H*')
@@ -217,7 +217,7 @@ module PacketGen
             cipher = get_cipher('gcm', :encrypt, key)
             iv = force_binary("\xAB\r\xE6M\x84E\xF7V")
             pkt.esp.encrypt! cipher, iv, salt: salt, esn: 0
-            expect(pkt.to_s).to eq(expected_pkt.to_s)
+            expect(pkt.to_s).to eq(expected_pkt_s)
           end
 
           it 'encrypts a payload with given padding' do

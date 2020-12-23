@@ -57,7 +57,10 @@ module PacketGen::Plugin
 
       def initialize(options={})
         super
-        self[:content].replace(options[:content]) if options[:content]
+        if options[:content]
+          self[:content] = PacketGen::Types::String.new
+          self[:content].read options[:content]
+        end
         calc_length unless options[:length]
       end
 

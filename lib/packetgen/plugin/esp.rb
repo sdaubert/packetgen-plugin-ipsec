@@ -226,7 +226,8 @@ module PacketGen::Plugin
       # as padding is used to pad for CBC mode, this is unused
       cipher.final
 
-      self[:body] = PacketGen::Types::String.new.read(iv) << enc_msg[0..-3]
+      self[:body] = PacketGen::Types::String.new.read(iv)
+      self[:body] << enc_msg[0..-3]
       self[:pad_length].read enc_msg[-2]
       self[:next].read enc_msg[-1]
 
