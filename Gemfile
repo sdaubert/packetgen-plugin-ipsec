@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 source 'https://rubygems.org'
 
 gemspec
@@ -7,7 +9,7 @@ gem 'rake', '~> 12.3'
 gem 'rspec', '~> 3.10'
 
 group :noci do
-  gem 'rubocop', '~> 1.6'
+  gem 'rubocop', '~> 1.6', '<= 1.12'
   gem 'rubocop-performance', '~> 1.9'
   gem 'simplecov', '~> 0.18'
   gem 'yard', '~> 0.9'

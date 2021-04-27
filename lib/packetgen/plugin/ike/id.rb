@@ -41,13 +41,13 @@ module PacketGen::Plugin
 
       # ID types
       TYPES = {
-        'IPV4_ADDR'   => 1,
-        'FQDN'        => 2,
+        'IPV4_ADDR' => 1,
+        'FQDN' => 2,
         'RFC822_ADDR' => 3,
-        'IPV6_ADDR'   => 5,
+        'IPV6_ADDR' => 5,
         'DER_ASN1_DN' => 9,
         'DER_ASN1_GN' => 10,
-        'KEY_ID'      => 11
+        'KEY_ID' => 11
       }.freeze
 
       # @attribute [r] type
@@ -69,7 +69,7 @@ module PacketGen::Plugin
       # @return [String]
       def human_content
         case type
-        when TYPES['IPV4_ADDR'], TYPES['IPV4_ADDR']
+        when TYPES['IPV4_ADDR'], TYPES['IPV6_ADDR']
           IPAddr.ntop(content)
         when TYPES['DER_ASN1_DN'], TYPES['DER_ASN1_GN']
           OpenSSL::X509::Name.new(content).to_s
@@ -77,7 +77,6 @@ module PacketGen::Plugin
           content.inspect
         end
       end
-
     end
 
     # This class handles Identification - Responder payloads, denoted IDr.

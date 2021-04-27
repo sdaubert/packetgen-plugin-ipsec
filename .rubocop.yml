@@ -1,21 +1,39 @@
 require:
   - rubocop-performance
 AllCops:
-  TargetRubyVersion: 2.4
+  TargetRubyVersion: '2.4'
+  NewCops: enable
+  Exclude:
+    - .git/**/*
+    - spec/**/*
+    - vendor/**/*
 Layout/LineLength:
-  Max: 150
+  Enabled: false
 Layout/SpaceAroundEqualsInParameterDefault:
   EnforcedStyle: no_space
 Lint/EmptyWhen:
   Enabled: false
 Lint/Void:
   Enabled: false
-Metrics:
+Metrics/AbcSize:
+    Max: 20
+Metrics/ClassLength:
+    Max: 200
+Metrics/MethodLength:
+    Max: 20
+Metrics/ParameterLists:
+  MaxOptionalParameters: 4
+Naming/FileName:
+  Enabled: false
+Style/AccessModifierDeclarations:
   Enabled: false
 Style/AsciiComments:
   Enabled: false
 Style/ClassAndModuleChildren:
-  EnforcedStyle: compact
+  Enabled: false
+Style/Documentation:
+  # Too many false positives!
+  Enabled: false
 Style/Encoding:
   Enabled: false
 Style/EvalWithLocation:
@@ -23,7 +41,7 @@ Style/EvalWithLocation:
 Style/FormatString:
   EnforcedStyle: percent
 Style/FormatStringToken:
-  EnforcedStyle: unannotated
+  MaxUnannotatedPlaceholdersAllowed: 3
 Style/PerlBackrefs:
   Enabled: false
 Style/RedundantSelf:

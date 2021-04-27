@@ -199,7 +199,7 @@ module PacketGen::Plugin
           end
           str = PacketGen::Inspect.shift_level
           str << PacketGen::Inspect::FMT_ATTR % [self[attr].class.to_s.sub(/.*::/, ''), attr,
-                                      str_flags]
+                                                 str_flags]
         end
       end
     end

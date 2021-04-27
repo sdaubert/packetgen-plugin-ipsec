@@ -145,7 +145,7 @@ module PacketGen::Plugin
 
           str = PacketGen::Inspect.shift_level
           str << PacketGen::Inspect::FMT_ATTR % [self[attr].class.to_s.sub(/.*::/, ''), attr,
-                                      human_protocol]
+                                                 human_protocol]
         end
       end
     end

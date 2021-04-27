@@ -64,8 +64,8 @@ module PacketGen::Plugin
         calc_length unless options[:length]
       end
 
-        # Compute length and set {#length} field
-        # @return [Integer] new length
+      # Compute length and set {#length} field
+      # @return [Integer] new length
       def calc_length
         # Here, #body is next payload, so body size should not be taken in
         # account (payload's real body is #content).
@@ -89,7 +89,7 @@ require_relative 'auth'
 require_relative 'ts'
 require_relative 'vendor_id'
 
-module PacketGen::Plugin
+module PacketGen::Plugin # rubocop:disable Metrics/ModuleLength
   IKE.bind IKE::SA, next: IKE::SA::PAYLOAD_TYPE
   IKE::Payload.bind IKE::SA, next: IKE::SA::PAYLOAD_TYPE
   IKE::KE.bind IKE::SA, next: IKE::SA::PAYLOAD_TYPE
@@ -287,19 +287,19 @@ module PacketGen::Plugin
   IKE::TSr.bind IKE::VendorID, next: IKE::VendorID::PAYLOAD_TYPE
 
   # Last defined. To be used as default if no other may be parsed.
-  IKE::SA.bind IKE::Payload, next: ->(v) { v > 0 }
-  IKE::KE.bind IKE::Payload, next: ->(v) { v > 0 }
-  IKE::Nonce.bind IKE::Payload, next: ->(v) { v > 0 }
-  IKE::Notify.bind IKE::Payload, next: ->(v) { v > 0 }
-  IKE::SK.bind IKE::Payload, next: ->(v) { v > 0 }
-  IKE::IDi.bind IKE::Payload, next: ->(v) { v > 0 }
-  IKE::IDr.bind IKE::Payload, next: ->(v) { v > 0 }
-  IKE::Cert.bind IKE::Payload, next: ->(v) { v > 0 }
-  IKE::CertReq.bind IKE::Payload, next: ->(v) { v > 0 }
-  IKE::Auth.bind IKE::Payload, next: ->(v) { v > 0 }
-  IKE::TSi.bind IKE::Payload, next: ->(v) { v > 0 }
-  IKE::TSr.bind IKE::Payload, next: ->(v) { v > 0 }
-  IKE::VendorID.bind IKE::Payload, next: ->(v) { v > 0 }
-  IKE.bind IKE::Payload, next: ->(v) { v > 0 }
-  IKE::Payload.bind IKE::Payload, next: ->(v) { v > 0 }
+  IKE::SA.bind IKE::Payload, next: ->(v) { v.positive? }
+  IKE::KE.bind IKE::Payload, next: ->(v) { v.positive? }
+  IKE::Nonce.bind IKE::Payload, next: ->(v) { v.positive? }
+  IKE::Notify.bind IKE::Payload, next: ->(v) { v.positive? }
+  IKE::SK.bind IKE::Payload, next: ->(v) { v.positive? }
+  IKE::IDi.bind IKE::Payload, next: ->(v) { v.positive? }
+  IKE::IDr.bind IKE::Payload, next: ->(v) { v.positive? }
+  IKE::Cert.bind IKE::Payload, next: ->(v) { v.positive? }
+  IKE::CertReq.bind IKE::Payload, next: ->(v) { v.positive? }
+  IKE::Auth.bind IKE::Payload, next: ->(v) { v.positive? }
+  IKE::TSi.bind IKE::Payload, next: ->(v) { v.positive? }
+  IKE::TSr.bind IKE::Payload, next: ->(v) { v.positive? }
+  IKE::VendorID.bind IKE::Payload, next: ->(v) { v.positive? }
+  IKE.bind IKE::Payload, next: ->(v) { v.positive? }
+  IKE::Payload.bind IKE::Payload, next: ->(v) { v.positive? }
 end

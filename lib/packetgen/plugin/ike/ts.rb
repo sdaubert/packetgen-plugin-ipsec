@@ -61,10 +61,13 @@ module PacketGen::Plugin
       define_field :end_addr, PacketGen::Header::IP::Addr
 
       # @param [Hash] options
+      # @options[Integer] :type
+      # @options[Integer] :protocol
+      # @options[Integer] :length
+      # @option [String] :start_addr
+      # @option [String] :end_addr
       # @option [Range] :ports port range
-      # @option [Integer] :start_port start port
-      # @option [Integer] :end_port end port
-      def initialize(options={})
+      def initialize(options={}) # rubocop:disable Metrics/AbcSize
         super
         select_addr options
         self[:start_addr].from_human(options[:start_addr]) if options[:start_addr]

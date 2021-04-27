@@ -73,49 +73,17 @@ module PacketGen::Plugin
       #   supported.
       # @note For certificates, only check AUTH authenticity with given (or guessed
       #   from packet) certificate, but certificate chain is not verified.
-      def check?(init_msg: nil, nonce: '', sk_p: '', prf: 1, shared_secret: '',
+      def check?(init_msg: nil, nonce: '', sk_p: '', prf: 1, shared_secret: '', # rubocop:disable Metrics/ParameterLists
                  cert: nil)
         raise TypeError, 'init_msg should be a Packet' unless init_msg.is_a?(PacketGen::Packet)
 
-        signed_octets = init_msg.ike.to_s
-        signed_octets << nonce
-        id = packet.ike.flag_i? ? packet.ike_idi : packet.ike_idr
-        signed_octets << prf(prf, sk_p, id.to_s[4, id.length - 4])
-
+        signed_octets = build_signed_octets(init_msg, nonce, sk_p, prf)
         case auth_method
         when METHODS['SHARED_KEY']
-          auth = prf(prf(shared_secret, 'Key Pad for IKEv2'), signed_octets)
-          auth == content
+          check_shared_key?(shared_secret, signed_octets)
         when METHODS['RSA_SIGNATURE'], METHODS['ECDSA256'], METHODS['ECDSA384'],
              METHODS['ECDSA512']
-          if packet.ike_cert
-            # FIXME: Expect a ENCODING_X509_CERT_SIG
-            #        Others types not supported for now...
-            cert = OpenSSL::X509::Certificate.new(packet.ike_cert.content)
-          elsif cert.nil?
-            raise CryptoError, 'a certificate should be provided'
-          end
-
-          text = cert.to_text
-          m = text.match(/Public Key Algorithm: ([a-zA-Z0-9-]+)/)
-          digest = case m[1]
-                   when 'id-ecPublicKey'
-                     m2 = text.match(/Public-Key: \((\d+) bit\)/)
-                     case m2[1]
-                     when '256'
-                       OpenSSL::Digest::SHA256.new
-                     when '384'
-                       OpenSSL::Digest::SHA384.new
-                     when '521'
-                       OpenSSL::Digest::SHA512.new
-                     end
-                   when /sha([235]\d+)/
-                     OpenSSL::Digest.const_get("SHA#{$1}").new
-                   when /sha1/, 'rsaEncryption'
-                     OpenSSL::Digest::SHA1.new
-                   end
-          signature = format_signature(cert.public_key, content.to_s)
-          cert.public_key.verify(digest, signature, signed_octets)
+          check_signature?(cert, signed_octets)
         when METHOD_NULL
           true
         else
@@ -130,6 +98,13 @@ module PacketGen::Plugin
       end
 
       private
+
+      def build_signed_octets(init_msg, nonce, sk_p, prf)
+        signed_octets = init_msg.ike.to_s
+        signed_octets << nonce
+        id = packet.ike.flag_i? ? packet.ike_idi : packet.ike_idr
+        signed_octets << prf(prf, sk_p, id.to_s[4, id.length - 4])
+      end
 
       def prf(type, key, msg)
         case type
@@ -146,6 +121,44 @@ module PacketGen::Plugin
         hmac = OpenSSL::HMAC.new(key, digest)
         hmac << msg
         hmac.digest
+      end
+
+      def check_shared_key?(shared_secret, signed_octets)
+        auth = prf(prf(shared_secret, 'Key Pad for IKEv2'), signed_octets)
+        auth == content
+      end
+
+      def check_signature?(cert, signed_octets)
+        if packet.ike_cert
+          # FIXME: Expect a ENCODING_X509_CERT_SIG
+          #        Others types not supported for now...
+          cert = OpenSSL::X509::Certificate.new(packet.ike_cert.content)
+        elsif cert.nil?
+          raise CryptoError, 'a certificate should be provided'
+        end
+
+        text = cert.to_text
+        digest = build_digest_object(text)
+        signature = format_signature(cert.public_key, content.to_s)
+        cert.public_key.verify(digest, signature, signed_octets)
+      end
+
+      def build_digest_object(text)
+        m = text.match(/Public Key Algorithm: ([a-zA-Z0-9-]+)/)
+        case m[1]
+        when 'id-ecPublicKey'
+          m2 = text.match(/Public-Key: \((\d+) bit\)/)
+          case m2[1]
+          when '256', '384'
+            OpenSSL::Digest.new("SHA#{m2[1]}")
+          when '521'
+            OpenSSL::Digest.new(SHA512)
+          end
+        when /sha([235]\d+)/
+          OpenSSL::Digest.new("SHA#{$1}")
+        when /sha1/, 'rsaEncryption'
+          OpenSSL::Digest.new('SHA1')
+        end
       end
 
       def format_signature(pkey, sig)

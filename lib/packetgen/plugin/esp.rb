@@ -7,6 +7,8 @@
 
 require_relative 'crypto'
 
+# rubocop:disable Metrics/ClassLength
+
 module PacketGen::Plugin
   # A ESP header consists of:
   # * a Security Parameters Index (#{spi}, {PacketGen::Types::Int32} type),
@@ -141,12 +143,11 @@ module PacketGen::Plugin
       force_binary str
       self[:spi].read str[0, 4]
       self[:sn].read str[4, 4]
-      self[:body].read str[8...-@icv_length - 2]
       self[:tfc].read ''
       self[:padding].read ''
-      self[:pad_length].read str[-@icv_length - 2, 1]
-      self[:next].read str[-@icv_length - 1, 1]
-      self[:icv].read str[-@icv_length, @icv_length] if @icv_length
+
+      read_icv_dependent_fields(str[8..-1])
+      read_icv(str)
       self
     end
 
@@ -177,72 +178,20 @@ module PacketGen::Plugin
     # @option options [OpenSSL::HMAC] :intmode integrity mode to use with a
     #   confidentiality-only cipher. Only HMAC are supported.
     # @return [self]
-    def encrypt!(cipher, iv, options={})
+    def encrypt!(cipher, iv, options={}) # rubocop:disable Naming/MethodParameterName
       opt = { salt: '', tfc_size: 1444 }.merge(options)
 
       set_crypto cipher, opt[:intmode]
-
-      real_iv = force_binary(opt[:salt]) + force_binary(iv)
-      real_iv += [1].pack('N') if confidentiality_mode == 'ctr'
-      cipher.iv = real_iv
+      compute_iv_for_encrypting iv, opt[:salt]
 
       authenticate_esp_header_if_needed options, iv
 
-      case confidentiality_mode
-      when 'cbc'
-        cipher_len = self[:body].sz + 2
-        self.pad_length = (16 - (cipher_len % 16)) % 16
-      else
-        mod4 = to_s.size % 4
-        self.pad_length = 4 - mod4 if mod4.positive?
-      end
-
-      if opt[:pad_length]
-        self.pad_length = opt[:pad_length]
-        padding = force_binary(opt[:padding] || (1..self.pad_length).to_a.pack('C*'))
-        self[:padding].read padding
-      else
-        padding = force_binary(opt[:padding] || (1..self.pad_length).to_a.pack('C*'))
-        self[:padding].read padding[0...self.pad_length]
-      end
-
-      tfc = ''
-      if opt[:tfc]
-        tfc_size = opt[:tfc_size] - self[:body].sz
-        if tfc_size.positive?
-          tfc_size = case confidentiality_mode
-                     when 'cbc'
-                       (tfc_size / 16) * 16
-                     else
-                       (tfc_size / 4) * 4
-                     end
-          tfc = force_binary("\0" * tfc_size)
-        end
-      end
-
-      msg = self[:body].to_s + tfc
-      msg += self[:padding].to_s + self[:pad_length].to_s + self[:next].to_s
-      enc_msg = encipher(msg)
-      # as padding is used to pad for CBC mode, this is unused
-      cipher.final
-
-      self[:body] = PacketGen::Types::String.new.read(iv)
-      self[:body] << enc_msg[0..-3]
-      self[:pad_length].read enc_msg[-2]
-      self[:next].read enc_msg[-1]
-
-      # reset padding field as it has no sense in encrypted ESP
-      self[:padding].read ''
+      encrypt_set_pad_length
+      encrypt_set_padding(opt)
+      encrypt_body(opt, iv)
 
       set_esp_icv_if_needed
-
-      # Remove enciphered headers from packet
-      id = header_id(self)
-      if id < packet.headers.size - 1
-        (packet.headers.size - 1).downto(id + 1) do |index|
-          packet.headers.delete_at index
-        end
-      end
+      remove_enciphered_packets
 
       self
     end
@@ -265,40 +214,27 @@ module PacketGen::Plugin
       opt = { salt: '', parse: true }.merge(options)
 
       set_crypto cipher, opt[:intmode]
-
-      case confidentiality_mode
-      when 'gcm'
-        iv = self[:body].slice!(0, 8)
-        real_iv = opt[:salt] + iv
-      when 'cbc'
-        cipher.padding = 0
-        real_iv = iv = self[:body].slice!(0, 16)
-      when 'ctr'
-        iv = self[:body].slice!(0, 8)
-        real_iv = opt[:salt] + iv + [1].pack('N')
-      else
-        real_iv = iv = self[:body].slice!(0, 16)
-      end
-      cipher.iv = real_iv
-
+      iv = compute_iv_for_decrypting(opt[:salt], self[:body])
       if authenticated? && (@icv_length.zero? || opt[:icv_length])
-        raise PacketGen::ParseError, 'unknown ICV size' unless opt[:icv_length]
-
-        @icv_length = opt[:icv_length].to_i
-        # reread ESP to handle new ICV size
-        msg = self[:body].to_s + self[:pad_length].to_s
-        msg += self[:next].to_s
-        self[:icv].read msg.slice!(-@icv_length, @icv_length)
-        self[:body].read msg[0..-3]
-        self[:pad_length].read msg[-2]
-        self[:next].read msg[-1]
+        check_icv_length(opt)
+        decrypt_format_packet
       end
-
       authenticate_esp_header_if_needed options, iv, icv
       private_decrypt opt
     end
 
     private
+
+    def read_icv_dependent_fields(str)
+      body_end = -@icv_length - 2
+      self[:body].read str[0...body_end]
+      self[:pad_length].read str[body_end, 1]
+      self[:next].read str[body_end + 1, 1]
+    end
+
+    def read_icv(str)
+      self[:icv].read str[-@icv_length, @icv_length] if @icv_length
+    end
 
     def get_auth_data(opt)
       ad = self[:spi].to_s
@@ -309,7 +245,7 @@ module PacketGen::Plugin
       ad << self[:sn].to_s
     end
 
-    def authenticate_esp_header_if_needed(opt, iv, icv=nil)
+    def authenticate_esp_header_if_needed(opt, iv, icv=nil) # rubocop:disable Naming/MethodParameterName
       if @conf.authenticated?
         @conf.auth_tag = icv if icv
         @conf.auth_data = get_auth_data(opt)
@@ -323,6 +259,65 @@ module PacketGen::Plugin
       end
     end
 
+    def encrypt_set_pad_length
+      case confidentiality_mode
+      when 'cbc'
+        cipher_len = self[:body].sz + 2
+        self.pad_length = (16 - (cipher_len % 16)) % 16
+      else
+        mod4 = to_s.size % 4
+        self.pad_length = 4 - mod4 if mod4.positive?
+      end
+    end
+
+    def encrypt_set_padding(opt)
+      if opt[:pad_length]
+        self.pad_length = opt[:pad_length]
+        padding = force_binary(opt[:padding] || (1..self.pad_length).to_a.pack('C*'))
+        self[:padding].read padding
+      else
+        padding = force_binary(opt[:padding] || (1..self.pad_length).to_a.pack('C*'))
+        self[:padding].read padding[0...self.pad_length]
+      end
+    end
+
+    def generate_tfc(opt)
+      tfc = ''
+      return tfc unless opt[:tfc]
+
+      tfc_size = opt[:tfc_size] - self[:body].sz
+      if tfc_size.positive?
+        tfc_size = case confidentiality_mode
+                   when 'cbc'
+                     (tfc_size / 16) * 16
+                   else
+                     (tfc_size / 4) * 4
+                   end
+        tfc = force_binary("\0" * tfc_size)
+      end
+      tfc
+    end
+
+    def encrypt_body(opt, iv) # rubocop:disable Naming/MethodParameterName
+      msg = self[:body].to_s + generate_tfc(opt)
+      msg += self[:padding].to_s + self[:pad_length].to_s + self[:next].to_s
+      enc_msg = encipher(msg)
+      # as padding is used to pad for CBC mode, this is unused
+      @conf.final
+
+      encrypt_set_encrypted_fields(enc_msg, iv)
+    end
+
+    def encrypt_set_encrypted_fields(msg, iv) # rubocop:disable Naming/MethodParameterName
+      self[:body] = PacketGen::Types::String.new.read(iv)
+      self[:body] << msg[0..-3]
+      self[:pad_length].read msg[-2]
+      self[:next].read msg[-1]
+
+      # reset padding field as it has no sense in encrypted ESP
+      self[:padding].read ''
+    end
+
     def set_esp_icv_if_needed
       return unless authenticated?
 
@@ -333,29 +328,62 @@ module PacketGen::Plugin
       end
     end
 
-    def private_decrypt(options)
-      # decrypt
-      msg = self.body.to_s
-      msg += self.padding + self[:pad_length].to_s + self[:next].to_s
-      plain_msg = decipher(msg)
+    def remove_enciphered_packets
+      id = header_id(self)
+      return if id >= packet.headers.size - 1
 
+      (packet.headers.size - 1).downto(id + 1) do |index|
+        packet.headers.delete_at index
+      end
+    end
+
+    def check_icv_length(opt)
+      raise PacketGen::ParseError, 'unknown ICV size' unless opt[:icv_length]
+
+      @icv_length = opt[:icv_length].to_i
+    end
+
+    def decrypt_format_packet
+      # reread ESP to handle new ICV size
+      msg = self[:body].to_s + self[:pad_length].to_s
+      msg << self[:next].to_s
+      read_icv_dependent_fields(msg)
+      read_icv(msg)
+    end
+
+    def private_decrypt(options)
+      plain_msg = decrypt_body
       # check authentication tag
       return false if authenticated? && !authenticate!
 
-      # Set ESP fields
+      new_pkt = fill_decrypted_fields_and_generate_plain_packet(plain_msg)
+      packet.encapsulate new_pkt if options[:parse] && !new_pkt.nil?
+      true
+    end
+
+    def decrypt_body
+      msg = self.body.to_s
+      msg += self.padding + self[:pad_length].to_s + self[:next].to_s
+      decipher(msg)
+    end
+
+    def fill_decrypted_fields_and_generate_plain_packet(plain_msg)
       self[:body].read plain_msg[0..-3]
       self[:pad_length].read plain_msg[-2]
       self[:next].read plain_msg[-1]
 
-      # Set padding
-      if self.pad_length.positive?
-        len = self.pad_length
-        self[:padding].read self[:body].slice!(-len, len)
-      end
+      fill_padding_field
+      generate_plain_pkt
+    end
 
-      # Set TFC padding
-      encap_length = 0
-      pkt = nil
+    def fill_padding_field
+      return unless self.pad_length.positive?
+
+      len = self.pad_length
+      self[:padding].read self[:body].slice!(-len, len)
+    end
+
+    def generate_plain_pkt # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
       case self.next
       when 4   # IPv4
         pkt = PacketGen::Packet.parse(body, first_header: 'IP')
@@ -381,19 +409,19 @@ module PacketGen::Plugin
         encap_length = self[:body].sz
       else
         # Unmanaged encapsulated protocol
+        pkt = nil
         encap_length = self[:body].sz
       end
 
-      if encap_length < self[:body].sz
-        tfc_len = self[:body].sz - encap_length
-        self[:tfc].read self[:body].slice!(encap_length, tfc_len)
-      end
+      remove_tfc_if_needed(encap_length)
+      pkt
+    end
 
-      if options[:parse]
-        packet.encapsulate pkt unless pkt.nil?
-      end
+    def remove_tfc_if_needed(real_length)
+      return if real_length == self[:body].sz
 
-      true
+      tfc_len = self[:body].sz - real_length
+      self[:tfc].read self[:body].slice!(real_length, tfc_len)
     end
   end
 
@@ -414,3 +442,4 @@ module PacketGen::Plugin
   ESP.bind PacketGen::Header::ICMP, next: PacketGen::Header::ICMP::IP_PROTOCOL
   ESP.bind PacketGen::Header::ICMPv6, next: PacketGen::Header::ICMPv6::IP_PROTOCOL
 end
+# rubocop:enable Metrics/ClassLength

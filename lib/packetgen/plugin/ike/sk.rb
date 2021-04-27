@@ -95,21 +95,7 @@ module PacketGen::Plugin
         opt = { salt: '', parse: true }.merge!(options)
 
         set_crypto cipher, opt[:intmode]
-
-        case confidentiality_mode
-        when 'gcm'
-          iv = self[:content].slice!(0, 8)
-          real_iv = force_binary(opt[:salt]) + iv
-        when 'cbc'
-          cipher.padding = 0
-          real_iv = iv = self[:content].slice!(0, 16)
-        when 'ctr'
-          iv = self[:content].slice!(0, 8)
-          real_iv = force_binary(opt[:salt]) + iv + [1].pack('N')
-        else
-          real_iv = iv = self[:content].slice!(0, 16)
-        end
-        cipher.iv = real_iv
+        iv = compute_iv_for_decrypting(force_binary(opt[:salt]), self[:content])
 
         if authenticated?
           if @icv_length.zero?
@@ -140,60 +126,28 @@ module PacketGen::Plugin
       # @option options [OpenSSL::HMAC] :intmode integrity mode to use with a
       #   confidentiality-only cipher. Only HMAC are supported.
       # @return [self]
-      def encrypt!(cipher, iv, options={})
+      def encrypt!(cipher, iv, options={}) # rubocop:disable Naming/MethodParameterName
         opt = { salt: '' }.merge!(options)
 
         set_crypto cipher, opt[:intmode]
-
-        real_iv = force_binary(opt[:salt]) + force_binary(iv)
-        real_iv += [1].pack('N') if confidentiality_mode == 'ctr'
-        cipher.iv = real_iv
+        compute_iv_for_encrypting iv, opt[:salt]
 
         authenticate_if_needed iv
-
-        if opt[:pad_length]
-          pad_length = opt[:pad_length]
-          padding = force_binary(opt[:padding] || ([0] * pad_length).pack('C*'))
-        else
-          pad_length = cipher.block_size
-          pad_length = 16 if cipher.block_size == 1 # Some AES mode returns 1...
-          pad_length -= (self[:body].sz + iv.size + 1) % cipher.block_size
-          pad_length = 0 if pad_length == 16
-          padding = force_binary(opt[:padding] || ([0] * pad_length).pack('C*'))
-          padding = padding[0, pad_length]
-        end
-        msg = self[:body].to_s + padding + PacketGen::Types::Int8.new(pad_length).to_s
-        encrypted_msg = encipher(msg)
-        cipher.final # message is already padded. No need for mode padding
-
-        if authenticated?
-          @icv_length = opt[:icv_length] if opt[:icv_length]
-          encrypted_msg << if @conf.authenticated?
-                             @conf.auth_tag[0, @icv_length]
-                           else
-                             @intg.digest[0, @icv_length]
-                           end
-        end
+        encrypted_msg = encrypt_body(iv, opt)
+        encrypted_msg << generate_auth_tag(opt) if authenticated?
         self[:content].read(iv + encrypted_msg)
 
         # Remove plain payloads
         self[:body] = PacketGen::Types::String.new
 
-        # Remove enciphered payloads from packet
-        id = header_id(self)
-        if id < packet.headers.size - 1
-          (packet.headers.size - 1).downto(id + 1) do |index|
-            packet.headers.delete_at index
-          end
-        end
-
+        remove_enciphered_packets
         self.calc_length
         self
       end
 
       private
 
-      def authenticate_if_needed(iv, icv=nil)
+      def authenticate_if_needed(iv, icv=nil) # rubocop:disable Naming/MethodParameterName
         if @conf.authenticated?
           @conf.auth_tag = icv if icv
           @conf.auth_data = get_ad
@@ -207,50 +161,98 @@ module PacketGen::Plugin
         end
       end
 
+      def encrypt_body(iv, opt) # rubocop:disable Naming/MethodParameterName
+        padding, pad_length = compute_padding(iv, opt)
+        msg = self[:body].to_s + padding + PacketGen::Types::Int8.new(pad_length).to_s
+        encrypted_msg = encipher(msg)
+        @conf.final # message is already padded. No need for mode padding
+        encrypted_msg
+      end
+
+      def compute_padding(iv, opt) # rubocop:disable Naming/MethodParameterName
+        if opt[:pad_length]
+          pad_length = opt[:pad_length]
+          padding = force_binary(opt[:padding] || ([0] * pad_length).pack('C*'))
+        else
+          pad_length = compute_pad_length(iv)
+          padding = force_binary(opt[:padding] || ([0] * pad_length).pack('C*'))
+          padding = padding[0, pad_length]
+        end
+        [padding, pad_length]
+      end
+
+      def compute_pad_length(iv) # rubocop:disable Naming/MethodParameterName
+        pad_length = @conf.block_size
+        pad_length = 16 if @conf.block_size == 1 # Some AES mode returns 1...
+        pad_length -= (self[:body].sz + iv.size + 1) % @conf.block_size
+        pad_length = 0 if pad_length == 16
+        pad_length
+      end
+
+      def generate_auth_tag(opt)
+        @icv_length = opt[:icv_length] if opt[:icv_length]
+        if @conf.authenticated?
+          @conf.auth_tag[0, @icv_length]
+        else
+          @intg.digest[0, @icv_length]
+        end
+      end
+
+      def remove_enciphered_packets
+        id = header_id(self)
+        return if id >= packet.headers.size - 1
+
+        (packet.headers.size - 1).downto(id + 1) do |index|
+          packet.headers.delete_at index
+        end
+      end
+
       # From RFC 7206, §5.1: The associated data MUST consist of the partial
       # contents of the IKEv2 message, starting from the first octet of the
       # Fixed IKE Plugin through the last octet of the Payload Plugin of the
       # Encrypted Payload (i.e., the fourth octet of the Encrypted Payload).
-      def get_ad
+      def get_ad # rubocop:disable Naming/AccessorMethodName
         str = packet.ike.to_s[0, IKE.new.sz]
         current_payload = packet.ike[:body]
         until current_payload.is_a? SK
-          str << current_payload.to_s[0, current_payload.to_s.length]
+          str << current_payload.to_s
           current_payload = current_payload[:body]
         end
         str << self.to_s[0, SK.new.sz]
       end
 
       def private_decrypt(options)
-        # decrypt
         plain_msg = decipher(content.to_s)
         # Remove cipher text
         self[:content].read ''
 
         # check authentication tag
-        if authenticated?
-          return false unless authenticate!
-        end
+        return false if authenticated? && !authenticate!
 
-        # remove padding
-        pad_len = PacketGen::Types::Int8.new.read(plain_msg[-1]).to_i
-        payloads = plain_msg[0, plain_msg.size - 1 - pad_len]
-
-        # parse IKE payloads
+        payloads = remove_padding(plain_msg)
         if options[:parse]
-          klass = IKE.constants.select do |c|
-            cst = IKE.const_get(c)
-            cst.is_a?(Class) && (cst < Payload) && (cst::PAYLOAD_TYPE == self.next)
-          end
-          klass = klass.nil? ? Payload : IKE.const_get(klass.first)
-          firsth = klass.protocol_name
-          pkt = PacketGen::Packet.parse(payloads, first_header: firsth)
-          packet.encapsulate(pkt, parsing: true) unless pkt.nil?
+          parse_ike_payloads(payloads)
         else
           self[:body].read payloads
         end
 
         true
+      end
+
+      def remove_padding(msg)
+        pad_len = PacketGen::Types::Int8.new.read(msg[-1]).to_i
+        msg[0, msg.size - 1 - pad_len]
+      end
+
+      def parse_ike_payloads(payloads)
+        klass = IKE.constants.select do |c|
+          cst = IKE.const_get(c)
+          cst.is_a?(Class) && (cst < Payload) && (cst::PAYLOAD_TYPE == self.next)
+        end
+        klass = klass.nil? ? Payload : IKE.const_get(klass.first)
+        firsth = klass.protocol_name
+        pkt = PacketGen::Packet.parse(payloads, first_header: firsth)
+        packet.encapsulate(pkt, parsing: true) unless pkt.nil?
       end
     end
   end

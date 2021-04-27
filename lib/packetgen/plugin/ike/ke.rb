@@ -68,6 +68,7 @@ module PacketGen::Plugin
                   Transform.const_defined?(cname) ? Transform.const_get(cname) : nil
                 end
         raise ArgumentError, "unknown group #{value.inspect}" unless group
+
         self[:group_num].value = group
       end
     end

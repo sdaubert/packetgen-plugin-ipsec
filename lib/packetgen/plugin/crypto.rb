@@ -72,5 +72,37 @@ module PacketGen::Plugin
       @intg&.update(data)
       @conf.update(data)
     end
+
+    # Compute and set IV for deciphering mode
+    # @param [PacketGen::Types::String] salt
+    # @param [String] msg ciphered message
+    # @return [String] iv
+    def compute_iv_for_decrypting(salt, msg)
+      case confidentiality_mode
+      when 'gcm'
+        iv = msg.slice!(0, 8)
+        real_iv = salt + iv
+      when 'cbc'
+        @conf.padding = 0
+        real_iv = iv = msg.slice!(0, 16)
+      when 'ctr'
+        iv = msg.slice!(0, 8)
+        real_iv = salt + iv + [1].pack('N')
+      else
+        real_iv = iv = msg.slice!(0, 16)
+      end
+      @conf.iv = real_iv
+      iv
+    end
+
+    # Compute and set real IV for ciphering mode
+    # @param [String] iv IV to use
+    # @param [String] salt salt to use
+    # @return [void]
+    def compute_iv_for_encrypting(iv, salt) # rubocop:disable Naming/MethodParameterName
+      real_iv = force_binary(salt) + force_binary(iv)
+      real_iv += [1].pack('N') if confidentiality_mode == 'ctr'
+      @conf.iv = real_iv
+    end
   end
 end
