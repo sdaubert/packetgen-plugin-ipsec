@@ -9,8 +9,8 @@ gem 'rake', '~> 12.3'
 gem 'rspec', '~> 3.10'
 
 group :noci do
-  gem 'rubocop', '~> 1.6', '<= 1.12'
-  gem 'rubocop-performance', '~> 1.9'
-  gem 'simplecov', '~> 0.18'
+  gem 'rubocop', '~> 1.12'
+  gem 'rubocop-performance', '~> 1.13'
+  gem 'simplecov', '~> 0.21'
   gem 'yard', '~> 0.9'
 end
