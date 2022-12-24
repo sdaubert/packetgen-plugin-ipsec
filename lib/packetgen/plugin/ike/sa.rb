@@ -462,9 +462,9 @@ module PacketGen::Plugin
         str = +"##{num} #{human_protocol}"
         case spi_size
         when 4
-          str << '(spi:0x%08x)' % PacketGen::Types::Int32.new.read(spi).to_i
+          str << ('(spi:0x%08x)' % PacketGen::Types::Int32.new.read(spi).to_i)
         when 8
-          str << '(spi:0x%016x)' % PacketGen::Types::Int64.new.read(spi).to_i
+          str << ('(spi:0x%016x)' % PacketGen::Types::Int64.new.read(spi).to_i)
         end
         str << ":#{transforms.to_human}"
       end

@@ -198,8 +198,7 @@ module PacketGen::Plugin
             str_flags << (send("flag_#{flag}?") ? flag.upcase : '.')
           end
           str = PacketGen::Inspect.shift_level
-          str << PacketGen::Inspect::FMT_ATTR % [self[attr].class.to_s.sub(/.*::/, ''), attr,
-                                                 str_flags]
+          str << (PacketGen::Inspect::FMT_ATTR % [self[attr].class.to_s.sub(/.*::/, ''), attr, str_flags])
         end
       end
     end

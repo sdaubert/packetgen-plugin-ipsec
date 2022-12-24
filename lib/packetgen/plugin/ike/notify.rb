@@ -144,8 +144,7 @@ module PacketGen::Plugin
           next unless attr == :protocol
 
           str = PacketGen::Inspect.shift_level
-          str << PacketGen::Inspect::FMT_ATTR % [self[attr].class.to_s.sub(/.*::/, ''), attr,
-                                                 human_protocol]
+          str << (PacketGen::Inspect::FMT_ATTR % [self[attr].class.to_s.sub(/.*::/, ''), attr, human_protocol])
         end
       end
     end

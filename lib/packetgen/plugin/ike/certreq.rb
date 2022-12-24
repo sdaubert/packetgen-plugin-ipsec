@@ -55,7 +55,7 @@ module PacketGen::Plugin
           next unless attr == :content
 
           str = PacketGen::Inspect.shift_level
-          str << PacketGen::Inspect::FMT_ATTR % ['hashes', :content, human_content]
+          str << (PacketGen::Inspect::FMT_ATTR % ['hashes', :content, human_content])
         end
       end
     end
