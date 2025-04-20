@@ -29,7 +29,7 @@ module PacketGen::Plugin
     #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     #   ~                    Integrity Checksum Data                    ~
     #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    # Encrypted payloads are set in {#content} field, as a {PacketGen::Types::String}.
+    # Encrypted payloads are set in {#content} field, as a {BinStruct::String}.
     # All others fields are only set when decrypting a previously read SK
     # payload. They also may be set manually to encrypt IKE payloads.
     #
@@ -138,7 +138,7 @@ module PacketGen::Plugin
         self[:content].read(iv + encrypted_msg)
 
         # Remove plain payloads
-        self[:body] = PacketGen::Types::String.new
+        self[:body] = BinStruct::String.new
 
         remove_enciphered_packets
         self.calc_length
@@ -163,7 +163,7 @@ module PacketGen::Plugin
 
       def encrypt_body(iv, opt) # rubocop:disable Naming/MethodParameterName
         padding, pad_length = compute_padding(iv, opt)
-        msg = self[:body].to_s + padding + PacketGen::Types::Int8.new(pad_length).to_s
+        msg = self[:body].to_s + padding + BinStruct::Int8.new(pad_length).to_s
         encrypted_msg = encipher(msg)
         @conf.final # message is already padded. No need for mode padding
         encrypted_msg
@@ -240,7 +240,7 @@ module PacketGen::Plugin
       end
 
       def remove_padding(msg)
-        pad_len = PacketGen::Types::Int8.new.read(msg[-1]).to_i
+        pad_len = BinStruct::Int8.new.read(msg[-1]).to_i
         msg[0, msg.size - 1 - pad_len]
       end
 

@@ -53,11 +53,11 @@ module PacketGen::Plugin
       # @attribute [r] auth_method
       #   8-bit Auth Method
       #   @return [Integer]
-      define_field_before :content, :auth_method, PacketGen::Types::Int8Enum, enum: METHODS
+      define_attr_before :content, :auth_method, BinStruct::Int8Enum, enum: METHODS
       # @attribute reserved
       #   24-bit reserved field
       #   @return [Integer]
-      define_field_before :content, :reserved, PacketGen::Types::Int24
+      define_attr_before :content, :reserved, BinStruct::Int24
 
       # Check authentication (see RFC 7296 §2.15)
       # @param [Packet] init_msg first IKE message sent by peer

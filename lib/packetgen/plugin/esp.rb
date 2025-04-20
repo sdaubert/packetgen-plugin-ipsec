@@ -11,12 +11,12 @@ require_relative 'crypto'
 
 module PacketGen::Plugin
   # A ESP header consists of:
-  # * a Security Parameters Index (#{spi}, {PacketGen::Types::Int32} type),
+  # * a Security Parameters Index (#{spi}, {BinStruct::Int32} type),
   # * a Sequence Number ({#sn}, +Int32+ type),
   # * a {#body} (variable length),
   # * an optional TFC padding ({#tfc}, variable length),
   # * an optional {#padding} (to align ESP on 32-bit boundary, variable length),
-  # * a {#pad_length} ({PacketGen::Types::Int8}),
+  # * a {#pad_length} ({BinStruct::Int8}),
   # * a Next header field ({#next}, +Int8+),
   # * and an optional Integrity Check Value ({#icv}, variable length).
   #
@@ -80,34 +80,34 @@ module PacketGen::Plugin
     # @!attribute spi
     #  32-bit Security Parameter Index
     #  @return [Integer]
-    define_field :spi, PacketGen::Types::Int32
+    define_attr :spi, BinStruct::Int32
     # @!attribute sn
     #  32-bit Sequence Number
     #  @return [Integer]
-    define_field :sn, PacketGen::Types::Int32
+    define_attr :sn, BinStruct::Int32
     # @!attribute body
-    #  @return [PacketGen::Types::String,PacketGen::Header::Base]
-    define_field :body, PacketGen::Types::String
+    #  @return [BinStruct::String,PacketGen::Header::Base]
+    define_attr :body, BinStruct::String
     # @!attribute tfc
     #  Traffic Flow Confidentiality padding
-    #  @return [PacketGen::Types::String,PacketGen::Header::Base]
-    define_field :tfc, PacketGen::Types::String
+    #  @return [BinStruct::String,PacketGen::Header::Base]
+    define_attr :tfc, BinStruct::String
     # @!attribute padding
     #  ESP padding
-    #  @return [PacketGen::Types::String,PacketGen::Header::Base]
-    define_field :padding, PacketGen::Types::String
+    #  @return [BinStruct::String,PacketGen::Header::Base]
+    define_attr :padding, BinStruct::String
     # @!attribute pad_length
     #  8-bit padding length
     #  @return [Integer]
-    define_field :pad_length, PacketGen::Types::Int8
+    define_attr :pad_length, BinStruct::Int8
     # @!attribute next
     #  8-bit next protocol value
     #  @return [Integer]
-    define_field :next, PacketGen::Types::Int8
+    define_attr :next, BinStruct::Int8
     # @!attribute icv
     #  Integrity Check Value
-    #  @return [PacketGen::Types::String,PacketGen::Header::Base]
-    define_field :icv, PacketGen::Types::String
+    #  @return [BinStruct::String,PacketGen::Header::Base]
+    define_attr :icv, BinStruct::String
 
     # ICV (Integrity Check Value) length
     # @return [Integer]
@@ -239,7 +239,7 @@ module PacketGen::Plugin
     def get_auth_data(opt)
       ad = self[:spi].to_s
       if opt[:esn]
-        @esn = PacketGen::Types::Int32.new(opt[:esn])
+        @esn = BinStruct::Int32.new(opt[:esn])
         ad << @esn.to_s if @conf.authenticated?
       end
       ad << self[:sn].to_s
@@ -309,7 +309,7 @@ module PacketGen::Plugin
     end
 
     def encrypt_set_encrypted_fields(msg, iv) # rubocop:disable Naming/MethodParameterName
-      self[:body] = PacketGen::Types::String.new.read(iv)
+      self[:body] = BinStruct::String.new.read(iv)
       self[:body] << msg[0..-3]
       self[:pad_length].read msg[-2]
       self[:next].read msg[-1]
@@ -433,7 +433,7 @@ module PacketGen::Plugin
                                            lambda { |f|
                                              (f.dport == ESP::UDP_PORT ||
                                              f.sport == ESP::UDP_PORT) &&
-                                               PacketGen::Types::Int32.new.read(f.body[0..3]).to_i.positive?
+                                               BinStruct::Int32.new.read(f.body[0..3]).to_i.positive?
                                            }]
   ESP.bind PacketGen::Header::IP, next: 4
   ESP.bind PacketGen::Header::IPv6, next: 41

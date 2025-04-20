@@ -28,11 +28,11 @@ module PacketGen::Plugin
     #   |                                                               |
     #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     # These specific fields are:
-    # * {#protocol} (type {PacketGen::Types::Int8}),
-    # * {#spi_size} (type {PacketGen::Types::Int8}),
-    # * {#message_type} (type {PacketGen::Types::Int16}),
-    # * {#spi} (type {PacketGen::Types::String}),
-    # * {#content} (type {PacketGen::Types::String}).
+    # * {#protocol} (type {BinStruct::Int8}),
+    # * {#spi_size} (type {BinStruct::Int8}),
+    # * {#message_type} (type {BinStruct::Int16}),
+    # * {#spi} (type {BinStruct::String}),
+    # * {#content} (type {BinStruct::String}).
     #
     # == Create a Notify payload
     #   # Create a IKE packet with a Notify payload
@@ -43,7 +43,7 @@ module PacketGen::Plugin
     # == Create a Notify payload with a SPI
     #   # Create a IKE packet with a Notify payload
     #   pkt = PacketGen.gen('IP').add('UDP').add('IKE').add('IKE::Notify', protocol: 'ESP', spi_size: 4, type: 'INVALID_SYNTAX')
-    #   pkt.ike_notify.spi.read PacketGen::Types::Int32.new(0x12345678).to_s
+    #   pkt.ike_notify.spi.read BinStruct::Int32.new(0x12345678).to_s
     #   pkt.calc_length
     #   @author Sylvain Daubert
     class Notify < Payload
@@ -93,7 +93,7 @@ module PacketGen::Plugin
       #  CHILD_SA_NOT_FOUND.  If the SPI field is empty, this field MUST be
       #  sent as zero and MUST be ignored on receipt.
       #  @return [Integer]
-      define_field_before :content, :protocol, PacketGen::Types::Int8Enum, enum: PROTOCOLS
+      define_attr_before :content, :protocol, BinStruct::Int8Enum, enum: PROTOCOLS
       # @!attribute spi_size
       #  8-bit SPI size. Give size of SPI field. Length in octets of the SPI as
       #  defined by the IPsec protocol ID or zero if no SPI is applicable. For a
@@ -101,16 +101,16 @@ module PacketGen::Plugin
       #  the field must be empty.Set to 0 for an initial IKE SA
       #  negotiation, as SPI is obtained from outer Plugin.
       #  @return [Integer]
-      define_field_before :content, :spi_size, PacketGen::Types::Int8, default: 0
+      define_attr_before :content, :spi_size, BinStruct::Int8, default: 0
       # @!attribute message_type
       #  16-bit notify message type. Specifies the type of notification message.
       #  @return [Integer]
-      define_field_before :content, :message_type, PacketGen::Types::Int16Enum, enum: TYPES, default: 0
+      define_attr_before :content, :message_type, BinStruct::Int16Enum, enum: TYPES, default: 0
       # @!attribute spi
       #   the sending entity's SPI. When the {#spi_size} field is zero,
       #   this field is not present in the proposal.
       #   @return [String]
-      define_field_before :content, :spi, PacketGen::Types::String,
+      define_attr_before :content, :spi, BinStruct::String,
                           builder: ->(h, t) { t.new(length_from: h[:spi_size]) }
 
       alias type message_type

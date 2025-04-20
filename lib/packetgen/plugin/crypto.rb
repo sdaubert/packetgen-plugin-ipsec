@@ -74,7 +74,7 @@ module PacketGen::Plugin
     end
 
     # Compute and set IV for deciphering mode
-    # @param [PacketGen::Types::String] salt
+    # @param [BinStruct::String] salt
     # @param [String] msg ciphered message
     # @return [String] iv
     def compute_iv_for_decrypting(salt, msg)

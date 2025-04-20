@@ -24,9 +24,9 @@ module PacketGen::Plugin
     #   |                                                               |
     #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     # These specific fields are:
-    # * {#group_num} (type {PacketGen::Types::Int16}),
-    # * {#reserved} (type {PacketGen::Types::Int16}),
-    # * and {#content} (type {PacketGen::Types::String}).
+    # * {#group_num} (type {BinStruct::Int16}),
+    # * {#reserved} (type {BinStruct::Int16}),
+    # * and {#content} (type {BinStruct::String}).
     #
     # == Create a KE payload
     #   # Create a IKE packet with a KE payload
@@ -44,11 +44,11 @@ module PacketGen::Plugin
       # @!attribute group_num
       #  16-bit DH group number
       #  @return [Integer]
-      define_field_before :content, :group_num, PacketGen::Types::Int16
+      define_attr_before :content, :group_num, BinStruct::Int16
       # @!attribute reserved
       #  16-bit reserved field
       #  @return [Integer]
-      define_field_before :content, :reserved, PacketGen::Types::Int16, default: 0
+      define_attr_before :content, :reserved, BinStruct::Int16, default: 0
 
       def initialize(options={})
         super

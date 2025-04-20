@@ -13,10 +13,10 @@ module PacketGen::Plugin
     # @!attribute non_esp_marker
     #  32-bit zero marker to differentiate IKE packet over UDP port 4500 from ESP ones
     #  @return [Integer]
-    define_field :non_esp_marker, PacketGen::Types::Int32, default: 0
+    define_attr :non_esp_marker, BinStruct::Int32, default: 0
     # @!attribute body
-    #  @return [PacketGen::Types::String,PacketGen::Header::Base]
-    define_field :body, PacketGen::Types::String
+    #  @return [BinStruct::String,PacketGen::Header::Base]
+    define_attr :body, BinStruct::String
 
     # Check non_esp_marker field
     # @see [PacketGen::Header::Base#parse?]
@@ -48,15 +48,15 @@ module PacketGen::Plugin
   #  |                            Length                             |
   #  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
   # A IKE Plugin consists of:
-  # * a IKE SA initiator SPI ({#init_spi}, {PacketGen::Types::Int64} type),
-  # * a IKE SA responder SPI ({#resp_spi}, {PacketGen::Types::Int64} type),
-  # * a Next Payload field ({#next}, {PacketGen::Types::Int8} type),
-  # * a Version field ({#version}, {PacketGen::Types::Int8} type, with first 4-bit field
+  # * a IKE SA initiator SPI ({#init_spi}, {BinStruct::Int64} type),
+  # * a IKE SA responder SPI ({#resp_spi}, {BinStruct::Int64} type),
+  # * a Next Payload field ({#next}, {BinStruct::Int8} type),
+  # * a Version field ({#version}, {BinStruct::Int8} type, with first 4-bit field
   #   as major number, and last 4-bit field as minor number),
-  # * a Exchange type ({#exchange_type}, {PacketGen::Types::Int8} type),
-  # * a {#flags} field ({PacketGen::Types::Int8} type),
-  # * a Message ID ({#message_id}, {PacketGen::Types::Int32} type),
-  # * and a {#length} ({PacketGen::Types::Int32} type).
+  # * a Exchange type ({#exchange_type}, {BinStruct::Int8} type),
+  # * a {#flags} field ({BinStruct::Int8} type),
+  # * a Message ID ({#message_id}, {BinStruct::Int32} type),
+  # * and a {#length} ({BinStruct::Int32} type).
   #
   # == Create a IKE Plugin
   # === Standalone
@@ -94,48 +94,32 @@ module PacketGen::Plugin
     # @!attribute init_spi
     #  64-bit initiator SPI
     #  @return [Integer]
-    define_field :init_spi, PacketGen::Types::Int64
+    define_attr :init_spi, BinStruct::Int64
     # @!attribute resp_spi
     #  64-bit responder SPI
     #  @return [Integer]
-    define_field :resp_spi, PacketGen::Types::Int64
+    define_attr :resp_spi, BinStruct::Int64
     # @!attribute next
     #  8-bit next payload type
     #  @return [Integer]
-    define_field :next, PacketGen::Types::Int8
+    define_attr :next, BinStruct::Int8
     # @!attribute version
     #  8-bit IKE version
     #  @return [Integer]
-    define_field :version, PacketGen::Types::Int8, default: 0x20
+    # @!attribute mjver
+    #  4-bit major version value ({#version}'s 4 most significant bits)
+    #  @return [Integer]
+    # @!attribute mnver
+    #  4-bit minor version value ({#version}'s 4 least significant bits)
+    #  @return [Integer]
+    define_bit_attr :version, default: 0x20, mjver: 4, mver: 4
     # @!attribute [r] exchange_type
     #  8-bit exchange type
     #  @return [Integer]
-    define_field :exchange_type, PacketGen::Types::Int8Enum, enum: EXCHANGE_TYPES
-    # @!attribute flags
+    define_attr :exchange_type, BinStruct::Int8Enum, enum: EXCHANGE_TYPES
+    # @!attribute flags. See {#flag_r}, {#flag_v} and {#flag_i}.
     #  8-bit flags
     #  @return [Integer]
-    define_field :flags, PacketGen::Types::Int8
-    # @!attribute message_id
-    #  32-bit message ID
-    #  @return [Integer]
-    define_field :message_id, PacketGen::Types::Int32
-    # @!attribute length
-    #  32-bit length of total message (Plugin + payloads)
-    #  @return [Integer]
-    define_field :length, PacketGen::Types::Int32
-
-    # Defining a body permits using Packet#parse to parse IKE payloads.
-    # But this method is hidden as prefered way to access payloads is via #payloads
-    define_field :body, PacketGen::Types::String
-
-    # @!attribute mjver
-    #  4-bit major version value
-    #  @return [Integer]
-    # @!attribute mnver
-    #  4-bit minor version value
-    #  @return [Integer]
-    define_bit_fields_on :version, :mjver, 4, :mnver, 4
-
     # @!attribute rsv1
     #  @return [Integer]
     # @!attribute rsv2
@@ -149,7 +133,19 @@ module PacketGen::Plugin
     # @!attribute flag_v
     #  version flag. Ignored by IKEv2 peers, and should be set to 0
     #  @return [Boolean]
-    define_bit_fields_on :flags, :rsv1, 2, :flag_r, :flag_v, :flag_i, :rsv2, 3
+    define_bit_attr :flags, rsv1: 2, flag_r: 1, flag_v: 1, flag_i: 1, rsv2: 3
+    # @!attribute message_id
+    #  32-bit message ID
+    #  @return [Integer]
+    define_attr :message_id, BinStruct::Int32
+    # @!attribute length
+    #  32-bit length of total message (Plugin + payloads)
+    #  @return [Integer]
+    define_attr :length, BinStruct::Int32
+
+    # Defining a body permits using Packet#parse to parse IKE payloads.
+    # But this method is hidden as prefered way to access payloads is via #payloads
+    define_attr :body, BinStruct::String
 
     # @param [Hash] options
     # @see PacketGen::Header::Base#initialize
