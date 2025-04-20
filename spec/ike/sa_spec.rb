@@ -106,7 +106,7 @@ module PacketGen
             expect(trans.type).to eq(1)
             expect(trans.rsv2).to eq(0)
             expect(trans.id).to eq(0)
-            expect(trans.attributes).to be_empty
+            expect(trans.tattributes).to be_empty
           end
 
           it 'accepts options' do
@@ -150,8 +150,8 @@ module PacketGen
             expect(@trans.rsv2).to eq(0)
             expect(@trans.id).to eq(20)
             expect(@trans.human_id).to eq('AES_GCM16')
-            expect(@trans.attributes.size).to eq(1)
-            expect(@trans.attributes.first.to_human).to eq('KEY_LENGTH=256')
+            expect(@trans.tattributes.size).to eq(1)
+            expect(@trans.tattributes.first.to_human).to eq('KEY_LENGTH=256')
           end
         end
 
@@ -167,27 +167,27 @@ module PacketGen
           end
 
           it 'returns a human readable string with undefined type and ID' do
-            @trans[:type].read 50
+            @trans[:type].value = 50
             @trans.id = 60
-            @trans.attributes.clear
+            @trans.tattributes.clear
             expect(@trans.to_human).to eq('type[50](ID=60)')
           end
 
-          describe '#attributes' do
+          describe '#tattributes' do
             let (:trans) { Transform.new }
 
             it 'accepts an Attribute' do
               attr = Attribute.new(type: 0x800e, value: 128)
-              expect { trans.attributes << attr }.to change(trans.attributes, :size).by(1)
+              expect { trans.tattributes << attr }.to change(trans.tattributes, :size).by(1)
               attr = Attribute.new(type: 12, value: 7)
-              expect { trans.attributes << attr }.to change(trans.attributes, :size).by(1)
+              expect { trans.tattributes << attr }.to change(trans.tattributes, :size).by(1)
               expect(trans.to_human).to eq('ENCR(ID=0,KEY_LENGTH=128,attr[12]=7)')
             end
 
             it 'accepts a Hash describing an attribute' do
-              expect { trans.attributes << { type: 0x800e, value: 192 } }.
-                to change(trans.attributes, :size).by(1)
-              expect(trans.attributes.first).to be_a(Attribute)
+              expect { trans.tattributes << { type: 0x800e, value: 192 } }.
+                to change(trans.tattributes, :size).by(1)
+              expect(trans.tattributes.first).to be_a(Attribute)
               expect(trans.to_human).to eq('ENCR(ID=0,KEY_LENGTH=192)')
             end
           end
@@ -253,7 +253,7 @@ module PacketGen
             expect(@prop.human_protocol).to eq('ESP')
             expect(@prop.spi_size).to eq(4)
             expect(@prop.num_trans).to eq(2)
-            expect(PacketGen::Types::Int32.new.read(@prop.spi).to_i).to eq(0x12345678)
+            expect(BinStruct::Int32.new.read(@prop.spi).to_i).to eq(0x12345678)
             expect(@prop.transforms.size).to eq(2)
             expect(@prop.transforms.to_human).to eq('ENCR(DES_IV64),INTG(AES192_GMAC)')
           end
@@ -355,7 +355,7 @@ module PacketGen
           it 'returns a string with all attributes' do
             str = @sa.inspect
             expect(str).to be_a(String)
-            (@sa.fields - %i(body)).each do |attr|
+            (@sa.attributes - %i(body)).each do |attr|
                expect(str).to include(attr.to_s)
              end
           end
@@ -392,7 +392,7 @@ module PacketGen
           it 'sets length fields recursively' do
             @sa.proposals << { num: 2, protocol: 'IKE', last: 43 }
             @sa.proposals.last.transforms << { type: 'ENCR', id: 'AES_CTR' }
-            @sa.proposals.last.transforms.last.attributes << { type: 0x800e, value: 128 }
+            @sa.proposals.last.transforms.last.tattributes << { type: 0x800e, value: 128 }
             expect(@sa.proposals.last.length).to eq(8)
             expect(@sa.proposals.last.transforms.last.length).to eq(8)
             @sa.calc_length

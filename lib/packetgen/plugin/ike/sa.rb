@@ -102,9 +102,9 @@ module PacketGen::Plugin
     # == Add attributes to a transform
     #  # using an Attribute object
     #  attr = PacketGen::Plugin::IKE::Attribute.new(type: 14, value: 128)
-    #  trans.attributes << attr
+    #  trans.tattributes << attr
     #  # using a hash
-    #  trans.attributes << { type: 14, value: 128 }
+    #  trans.tattributes << { type: 14, value: 128 }
     # @author Sylvain Daubert
     class Transform < BinStruct::Struct
       # Transform types
@@ -276,10 +276,10 @@ module PacketGen::Plugin
       #  the proposed transform type.
       #  @return [Integer]
       define_attr :id, BinStruct::Int16
-      # @!attribute attributes
+      # @!attribute tattributes
       #  Set of attributes for this transform
       #  @return [Attributes]
-      define_attr :attributes, Attributes, builder: ->(h, t) { t.new(length_from: -> { h.length - h.offset_of(:attributes) }) }
+      define_attr :tattributes, Attributes, builder: ->(h, t) { t.new(length_from: -> { h.length - h.offset_of(:tattributes) }) }
 
       def initialize(options={})
         super
@@ -316,7 +316,7 @@ module PacketGen::Plugin
       # @return [String]
       def to_human
         h = +"#{human_type}(#{human_id}"
-        h << ",#{attributes.to_human}" unless attributes.empty?
+        h << ",#{tattributes.to_human}" unless tattributes.empty?
 
         h << ')'
       end
@@ -530,7 +530,7 @@ module PacketGen::Plugin
     #   # ID is taken from Transform::<TYPE>_* constants.
     #   pkt.ike_sa.proposals.first.transforms << { type: 'ENCR', id: 'AES_CTR' }
     #   # and finally, add an attribute to this transform (here, KEY_SIZE = 128 bits)
-    #   pkt.ike_sa.proposals[0].transforms[0].attributes << { type: 0x800e, value: 128 }
+    #   pkt.ike_sa.proposals[0].transforms[0].tattributes << { type: 0x800e, value: 128 }
     #   pkt.calc_length
     # @author Sylvain Daubert
     class SA < Payload
