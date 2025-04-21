@@ -25,7 +25,7 @@ module PacketGen::Plugin
     #   |                                                               |
     #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     # @author Sylvain Daubert
-    class TrafficSelector < PacketGen::Types::Fields
+    class TrafficSelector < BinStruct::Struct
       # IPv4 traffic selector type
       TS_IPV4_ADDR_RANGE = 7
       # IPv6 traffic selector type
@@ -34,31 +34,31 @@ module PacketGen::Plugin
       # @!attribute [r] type
       #  8-bit TS type
       #  @return [Integer]
-      define_field :type, PacketGen::Types::Int8, default: 7
+      define_attr :type, BinStruct::Int8, default: 7
       # @!attribute [r] protocol
       #  8-bit protocol ID
       #  @return [Integer]
-      define_field :protocol, PacketGen::Types::Int8, default: 0
+      define_attr :protocol, BinStruct::Int8, default: 0
       # @!attribute length
       #  16-bit Selector Length
       #  @return [Integer]
-      define_field :length, PacketGen::Types::Int16
+      define_attr :length, BinStruct::Int16
       # @!attribute start_port
       #  16-bit Start port
       #  @return [Integer]
-      define_field :start_port, PacketGen::Types::Int16, default: 0
+      define_attr :start_port, BinStruct::Int16, default: 0
       # @!attribute end_port
       #  16-bit End port
       #  @return [Integer]
-      define_field :end_port, PacketGen::Types::Int16, default: 65_535
+      define_attr :end_port, BinStruct::Int16, default: 65_535
       # @!attribute start_addr
       #  starting address
       #  @return [IP::Addr, IPv6::Addr]
-      define_field :start_addr, PacketGen::Header::IP::Addr
+      define_attr :start_addr, PacketGen::Header::IP::Addr
       # @!attribute end_addr
       #  starting address
       #  @return [IP::Addr, IPv6::Addr]
-      define_field :end_addr, PacketGen::Header::IP::Addr
+      define_attr :end_addr, PacketGen::Header::IP::Addr
 
       # @param [Hash] options
       # @options[Integer] :type
@@ -189,7 +189,7 @@ module PacketGen::Plugin
 
     # Set of {TrafficSelector}, used by {TSi} and {TSr}.
     # @author Sylvain Daubert
-    class TrafficSelectors < PacketGen::Types::Array
+    class TrafficSelectors < BinStruct::Array
       set_of TrafficSelector
     end
 
@@ -226,21 +226,21 @@ module PacketGen::Plugin
       # Payload type number
       PAYLOAD_TYPE = 44
 
-      remove_field :content
+      remove_attr :content
 
       # @!attribute num_ts
       #   8-bit Number of TSs
       #   @return [Integer]
-      define_field_before :body, :num_ts, PacketGen::Types::Int8
+      define_attr_before :body, :num_ts, BinStruct::Int8
       # @!attribute rsv
       #   24-bit RESERVED field
       #   @return [Integer]
-      define_field_before :body, :rsv, PacketGen::Types::Int24
+      define_attr_before :body, :rsv, BinStruct::Int24
 
       # @!attribute traffic_selectors
       #  Set of {TrafficSelector}
       #  @return {TrafficSelectors}
-      define_field_before :body, :traffic_selectors, TrafficSelectors,
+      define_attr_before :body, :traffic_selectors, TrafficSelectors,
                           builder: ->(h, t) { t.new(counter: h[:num_ts]) }
       alias selectors traffic_selectors
 

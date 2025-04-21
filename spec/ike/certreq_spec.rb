@@ -69,8 +69,8 @@ module PacketGen
           it 'returns a binary string' do
             certreq = CertReq.new(next: 2, encoding: 'X509_CERT_SIG', content: 'a' * 20)
             certreq.calc_length
-            expected = "\x02\x00\x00\x19\x04" + 'a' * 20
-            expect(certreq.to_s).to eq(force_binary expected)
+            expected = ("\x02\x00\x00\x19\x04" + 'a' * 20).b
+            expect(certreq.to_s).to eq(expected)
           end
         end
 
@@ -79,7 +79,7 @@ module PacketGen
             certreq = CertReq.new(content: 'a' * 20 + 'b' * 20)
             str = certreq.inspect
             expect(str).to be_a(String)
-            (certreq.fields - %i(body)).each do |attr|
+            (certreq.attributes - %i(body)).each do |attr|
               expect(str).to include(attr.to_s)
               if attr == :content
                 expect(str).to match(/^\s+hashes/)

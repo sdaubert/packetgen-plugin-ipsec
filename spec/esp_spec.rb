@@ -14,7 +14,7 @@ module PacketGen
         end
 
         it 'in UDP packets' do
-          int32 = PacketGen::Types::Int32.new(1)
+          int32 = BinStruct::Int32.new(value: 1)
           expect(PacketGen::Header::UDP).to know_header(ESP).with(dport: 4500, sport: nil, body: int32.to_s)
           expect(PacketGen::Header::UDP).to know_header(ESP).with(sport: 4500, dport: nil, body: int32.to_s)
           int32.value = 0
@@ -117,8 +117,8 @@ module PacketGen
           esp.body = 'body'
           esp.spi = 1
           esp.sn = 2
-          expected = [1, 2].pack('N2') + 'body' + "\x00" * 2
-          expect(esp.to_s).to eq(force_binary expected)
+          expected = [1, 2].pack('N2') + 'body'.b + "\x00".b * 2
+          expect(esp.to_s).to eq(expected)
         end
       end
 
@@ -127,7 +127,7 @@ module PacketGen
           esp = ESP.new
           str = esp.inspect
           expect(str).to be_a(String)
-          (esp.fields - %i(body)).each do |attr|
+          (esp.attributes - %i(body)).each do |attr|
             expect(str).to include(attr.to_s)
           end
         end
@@ -196,7 +196,7 @@ module PacketGen
             key = [key.to_s(16)].pack('H*')
             salt = [0xe6971987.to_s(16)].pack('H*')
             cipher = get_cipher('gcm', :encrypt, key)
-            iv = force_binary("\xD9\xD2\x1F\xCE\xDA\xE0Uj")
+            iv = "\xD9\xD2\x1F\xCE\xDA\xE0Uj".b
             black_pkt.esp.encrypt! cipher, iv, salt: salt, tfc: true, tfc_size: 1000
             expect(black_pkt.esp.to_s).to eq(esp_pkt.esp.to_s)
           end
@@ -215,7 +215,7 @@ module PacketGen
             pkt.esp.decrypt!(cipher, salt: salt, esn: 0)
 
             cipher = get_cipher('gcm', :encrypt, key)
-            iv = force_binary("\xAB\r\xE6M\x84E\xF7V")
+            iv = "\xAB\r\xE6M\x84E\xF7V".b
             pkt.esp.encrypt! cipher, iv, salt: salt, esn: 0
             expect(pkt.to_s).to eq(expected_pkt_s)
           end
@@ -234,7 +234,7 @@ module PacketGen
 
             black_pkt.esp.decrypt! get_cipher('gcm', :decrypt, key), salt: salt
             expect(black_pkt.esp.pad_length).to eq(2)
-            expect(black_pkt.esp.padding).to eq(force_binary("\xff\xff"))
+            expect(black_pkt.esp.padding).to eq("\xff\xff".b)
           end
 
           it 'encrypts a payload with given padding length' do
@@ -269,8 +269,8 @@ module PacketGen
 
             black_pkt.esp.decrypt! get_cipher('gcm', :decrypt, key), salt: salt
             expect(black_pkt.esp.pad_length).to eq(15)
-            expect(black_pkt.esp.padding).to eq(force_binary("\xff" * 15))
-            expect(black_pkt.body[-9..-1]).to eq(force_binary("\xff" * 9))
+            expect(black_pkt.esp.padding).to eq("\xff".b * 15)
+            expect(black_pkt.body[-9..-1]).to eq("\xff".b * 9)
           end
         end
 
@@ -315,8 +315,8 @@ module PacketGen
             cipher = get_cipher('gcm', :decrypt, key)
             expect(pkt.esp.decrypt!(cipher, salt: salt)).to be(true)
             expect(pkt.esp.tfc.length).to eq(916)
-            expect(pkt.esp.tfc).to eq(force_binary("\x00" * 916))
-            expect(pkt.esp.padding).to eq(force_binary("\x01\x02"))
+            expect(pkt.esp.tfc).to eq("\x00".b * 916)
+            expect(pkt.esp.padding).to eq("\x01\x02".b)
             expect(pkt.esp.body.to_s).to eq(red_pkt.ip.to_s)
           end
 
@@ -343,7 +343,7 @@ module PacketGen
 
             cipher = get_cipher('gcm', :decrypt, key)
             expect(pkt.esp.decrypt!(cipher, salt: salt, parse: false)).to be(true)
-            expect(pkt.esp[:body]).to be_a(Types::String)
+            expect(pkt.esp[:body]).to be_a(BinStruct::String)
           end
 
           it 'returns false when ICV check failed' do
@@ -399,7 +399,7 @@ module PacketGen
           pkt.body.read("\x00" * 16)
           str = pkt.to_s
           pkt2 = Packet.parse(str)
-          expect(pkt2.udp[:body]).to be_a(Types::String)
+          expect(pkt2.udp[:body]).to be_a(BinStruct::String)
         end
       end
     end

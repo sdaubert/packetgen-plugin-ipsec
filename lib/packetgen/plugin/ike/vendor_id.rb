@@ -11,7 +11,7 @@ module PacketGen::Plugin
     # This class handles Vendor ID payloads, as defined in RFC 7296 §3.12.
     #
     # A Vendor ID payload contains a generic payload Plugin (see {Payload})
-    # and data field (type {PacketGen::Types::String}):
+    # and data field (type {BinStruct::String}):
     #                        1                   2                   3
     #    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
     #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+

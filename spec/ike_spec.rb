@@ -88,7 +88,7 @@ module PacketGen
           ike = IKE.new
           str = ike.inspect
           expect(str).to be_a(String)
-          (ike.fields - %i(body)).each do |attr|
+          (ike.attributes - %i(body)).each do |attr|
             expect(str).to include(attr.to_s)
           end
         end
@@ -183,12 +183,12 @@ module PacketGen
           ike.add('IKE::SA')
           ike.ike_sa.proposals << prop1
           ike.ike_sa.proposals << prop2
-          ike.add('IKE::KE', group: 'ECP256', content: force_binary("\0" * 64))
-          ike.add('IKE::Nonce', content: force_binary("\0" * 16))
+          ike.add('IKE::KE', group: 'ECP256', content: "\0".b * 64)
+          ike.add('IKE::Nonce', content: "\0".b * 16)
           ike.calc_length
           ike.calc_checksum
-          expected = File.read(File.join(__dir__, 'ike_sa_init.bin'))
-          expect(ike.to_s).to eq(force_binary expected)
+          expected = File.read(File.join(__dir__, 'ike_sa_init.bin')).b
+          expect(ike.to_s).to eq(expected)
         end
       end
     end

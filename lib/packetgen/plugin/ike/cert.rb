@@ -56,7 +56,7 @@ module PacketGen::Plugin
       # @attribute encoding
       #   8-bit certificate encoding
       #   @return [Integer]
-      define_field_before :content, :encoding, PacketGen::Types::Int8Enum, enum: ENCODINGS
+      define_attr_before :content, :encoding, BinStruct::Int8Enum, enum: ENCODINGS
 
       def initialize(options={})
         super

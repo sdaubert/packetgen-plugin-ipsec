@@ -53,11 +53,11 @@ module PacketGen::Plugin
       # @attribute [r] type
       #   8-bit ID type
       #   @return [Integer]
-      define_field_before :content, :type, PacketGen::Types::Int8Enum, enum: TYPES
+      define_attr_before :content, :type, BinStruct::Int8Enum, enum: TYPES
       # @attribute reserved
       #   24-bit reserved field
       #   @return [Integer]
-      define_field_before :content, :reserved, PacketGen::Types::Int24
+      define_attr_before :content, :reserved, BinStruct::Int24
 
       # Get ID type name
       # @return [String]

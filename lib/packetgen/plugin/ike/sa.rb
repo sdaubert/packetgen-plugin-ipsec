@@ -21,22 +21,22 @@ module PacketGen::Plugin
     # Such an attribute may have a TLV (Type/length/value) format if AF=0,
     # or a TV format (AF=1).
     # @author Sylvain Daubert
-    class Attribute < PacketGen::Types::Fields
+    class Attribute < BinStruct::Struct
       # KeyLength attribute type
       TYPE_KEY_LENGTH = 14
 
       # @!attribute type
       #  attribute type
       #  @return [Integer]
-      define_field :type, PacketGen::Types::Int16
+      define_attr :type, BinStruct::Int16
       # @!attribute length
       #  attribute length
       #  @return [Integer]
-      define_field :length, PacketGen::Types::Int16
+      define_attr :length, BinStruct::Int16
       # @!attribute value
       #  attribute value
       #  @return [Integer]
-      define_field :value, PacketGen::Types::Int32, optional: ->(h) { !h.tv_format? }
+      define_attr :value, BinStruct::Int32, optional: ->(h) { !h.tv_format? }
 
       def initialize(options={})
         super
@@ -77,7 +77,7 @@ module PacketGen::Plugin
 
     # Set of {Attribute} in a {Transform}
     # @author Sylvain Daubert
-    class Attributes < PacketGen::Types::Array
+    class Attributes < BinStruct::Array
       set_of Attribute
     end
 
@@ -102,11 +102,11 @@ module PacketGen::Plugin
     # == Add attributes to a transform
     #  # using an Attribute object
     #  attr = PacketGen::Plugin::IKE::Attribute.new(type: 14, value: 128)
-    #  trans.attributes << attr
+    #  trans.tattributes << attr
     #  # using a hash
-    #  trans.attributes << { type: 14, value: 128 }
+    #  trans.tattributes << { type: 14, value: 128 }
     # @author Sylvain Daubert
-    class Transform < PacketGen::Types::Fields
+    class Transform < BinStruct::Struct
       # Transform types
       TYPES = {
         'ENCR' => 1,
@@ -253,33 +253,33 @@ module PacketGen::Plugin
       #  if this was the last Transform Substructure, and a value of 3 if
       #  there are more Transform Substructures.
       #  @return [Integer]
-      define_field :last, PacketGen::Types::Int8
+      define_attr :last, BinStruct::Int8
       # @!attribute rsv1
       #  8-bit reserved field
       #  @return [Integer]
-      define_field :rsv1, PacketGen::Types::Int8
+      define_attr :rsv1, BinStruct::Int8
       # @!attribute length
       #  16-bit transform length
       #  @return [Integer]
-      define_field :length, PacketGen::Types::Int16
+      define_attr :length, BinStruct::Int16
       # @!attribute [r] type
       #  8-bit transform type. The Transform Type is the cryptographic
       #  algorithm type (i.e. encryption, PRF, integrity, etc.)
       #  @return [Integer]
-      define_field :type, PacketGen::Types::Int8Enum, enum: TYPES
+      define_attr :type, BinStruct::Int8Enum, enum: TYPES
       # @!attribute rsv2
       #  8-bit reserved field
       #  @return [Integer]
-      define_field :rsv2, PacketGen::Types::Int8
+      define_attr :rsv2, BinStruct::Int8
       # @!attribute [r] id
       #  16-bit transform ID. The Transform ID is the specific instance of
       #  the proposed transform type.
       #  @return [Integer]
-      define_field :id, PacketGen::Types::Int16
-      # @!attribute attributes
+      define_attr :id, BinStruct::Int16
+      # @!attribute tattributes
       #  Set of attributes for this transform
       #  @return [Attributes]
-      define_field :attributes, Attributes, builder: ->(h, t) { t.new(length_from: -> { h.length - h.offset_of(:attributes) }) }
+      define_attr :tattributes, Attributes, builder: ->(h, t) { t.new(length_from: -> { h.length - h.offset_of(:tattributes) }) }
 
       def initialize(options={})
         super
@@ -316,7 +316,7 @@ module PacketGen::Plugin
       # @return [String]
       def to_human
         h = +"#{human_type}(#{human_id}"
-        h << ",#{attributes.to_human}" unless attributes.empty?
+        h << ",#{tattributes.to_human}" unless tattributes.empty?
 
         h << ')'
       end
@@ -353,11 +353,11 @@ module PacketGen::Plugin
 
     # Set of {Transform} in a {SAProposal}
     # @author Sylvain Daubert
-    class Transforms < PacketGen::Types::Array
+    class Transforms < BinStruct::Array
       set_of Transform
 
-      # Same as {PacketGen::Types::Array#push} but update previous {Transform#last} attribute
-      # @see PacketGen::Types::Array#push
+      # Same as {BinStruct::Array#push} but update previous {Transform#last} attribute
+      # @see BinStruct::Array#push
       def push(trans)
         super
         self[-2].last = 3 if size > 1
@@ -393,22 +393,22 @@ module PacketGen::Plugin
     #  # using a hash
     #  proposal.transforms << { type: 'ENCR', id: '3DES' }
     # @author Sylvain Daubert
-    class SAProposal < PacketGen::Types::Fields
+    class SAProposal < BinStruct::Struct
       # @!attribute last
       #  8-bit last substructure. Specifies whether or not this is the
       #  last Proposal Substructure in the SA. This field has a value of 0
       #  if this was the last Proposal Substructure, and a value of 2 if
       #  there are more Proposal Substructures.
       #  @return [Integer]
-      define_field :last, PacketGen::Types::Int8
+      define_attr :last, BinStruct::Int8
       # @!attribute reserved
       #  8-bit reserved field
       #  @return [Integer]
-      define_field :reserved, PacketGen::Types::Int8
+      define_attr :reserved, BinStruct::Int8
       # @!attribute length
       #  16-bit proposal length
       #  @return [Integer]
-      define_field :length, PacketGen::Types::Int16
+      define_attr :length, BinStruct::Int16
       # @!attribute num
       #  8-bit proposal number. When a proposal is made, the first
       #  proposal in an SA payload MUST be 1, and subsequent proposals MUST
@@ -417,30 +417,30 @@ module PacketGen::Plugin
       #  in the SA payload MUST match the number on the proposal sent that
       #  was accepted.
       #  @return [Integer]
-      define_field :num, PacketGen::Types::Int8, default: 1
+      define_attr :num, BinStruct::Int8, default: 1
       # @!attribute [r] protocol
       #  8-bit protocol ID. Specify IPsec protocol currently negociated.
       #  May 1 (IKE), 2 (AH) or 3 (ESP).
       #  @return [Integer]
-      define_field :protocol, PacketGen::Types::Int8Enum, enum: PROTOCOLS
+      define_attr :protocol, BinStruct::Int8Enum, enum: PROTOCOLS
       # @!attribute spi_size
       #  8-bit SPI size. Give size of SPI field. Set to 0 for an initial IKE SA
       #  negotiation, as SPI is obtained from outer Plugin.
       #  @return [Integer]
-      define_field :spi_size, PacketGen::Types::Int8, default: 0
+      define_attr :spi_size, BinStruct::Int8, default: 0
       # @!attribute num_trans
       #  8-bit number of transformations
       #  @return [Integer]
-      define_field :num_trans, PacketGen::Types::Int8, default: 0
+      define_attr :num_trans, BinStruct::Int8, default: 0
       # @!attribute spi
       #   the sending entity's SPI. When the {#spi_size} field is zero,
       #   this field is not present in the proposal.
       #   @return [String]
-      define_field :spi, PacketGen::Types::String, builder: ->(h, t) { t.new(length_from: h[:spi_size]) }
+      define_attr :spi, BinStruct::String, builder: ->(h, t) { t.new(length_from: h[:spi_size]) }
       # @!attribute transforms
       #  8-bit set of tranforms for this proposal
       #  @return [Transforms]
-      define_field :transforms, Transforms, builder: ->(h, t) { t.new(counter: h[:num_trans]) }
+      define_attr :transforms, Transforms, builder: ->(h, t) { t.new(counter: h[:num_trans]) }
 
       def initialize(options={})
         options[:spi_size] = options[:spi].size if options[:spi] && options[:spi_size].nil?
@@ -462,9 +462,9 @@ module PacketGen::Plugin
         str = +"##{num} #{human_protocol}"
         case spi_size
         when 4
-          str << ('(spi:0x%08x)' % PacketGen::Types::Int32.new.read(spi).to_i)
+          str << ('(spi:0x%08x)' % BinStruct::Int32.new.read(spi).to_i)
         when 8
-          str << ('(spi:0x%016x)' % PacketGen::Types::Int64.new.read(spi).to_i)
+          str << ('(spi:0x%016x)' % BinStruct::Int64.new.read(spi).to_i)
         end
         str << ":#{transforms.to_human}"
       end
@@ -490,14 +490,14 @@ module PacketGen::Plugin
 
     # Set of {SAProposal}
     # @author Sylvain Daubert
-    class SAProposals < PacketGen::Types::Array
+    class SAProposals < BinStruct::Array
       set_of SAProposal
 
       # Separator used between proposals in {#to_human}
       HUMAN_SEPARATOR = '; '
 
-      # Same as {PacketGen::Types::Array#push} but update previous {SAProposal#last} attribute
-      # @see PacketGen::Types::Array#push
+      # Same as {BinStruct::Array#push} but update previous {SAProposal#last} attribute
+      # @see BinStruct::Array#push
       def push(prop)
         super
         self[-2].last = 2 if size > 1
@@ -530,19 +530,19 @@ module PacketGen::Plugin
     #   # ID is taken from Transform::<TYPE>_* constants.
     #   pkt.ike_sa.proposals.first.transforms << { type: 'ENCR', id: 'AES_CTR' }
     #   # and finally, add an attribute to this transform (here, KEY_SIZE = 128 bits)
-    #   pkt.ike_sa.proposals[0].transforms[0].attributes << { type: 0x800e, value: 128 }
+    #   pkt.ike_sa.proposals[0].transforms[0].tattributes << { type: 0x800e, value: 128 }
     #   pkt.calc_length
     # @author Sylvain Daubert
     class SA < Payload
       # Payload type number
       PAYLOAD_TYPE = 33
 
-      remove_field :content
+      remove_attr :content
 
       # @!attribute proposals
       #  Set of SA proposals
       #  @return [SAProposals]
-      define_field_before :body, :proposals, SAProposals, builder: ->(h, t) { t.new(length_from: -> { h.length - h.offset_of(:proposals) }) }
+      define_attr_before :body, :proposals, SAProposals, builder: ->(h, t) { t.new(length_from: -> { h.length - h.offset_of(:proposals) }) }
 
       # Compute length and set {#length} field
       # @return [Integer] new length

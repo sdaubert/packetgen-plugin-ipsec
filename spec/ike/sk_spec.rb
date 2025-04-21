@@ -45,8 +45,8 @@ module PacketGen
           it 'returns a binary string' do
             sk = SK.new(next: 2, content: 'abcdefghijkl')
             sk.calc_length
-            expected = "\x02\x00\x00\x10abcdefghijkl"
-            expect(sk.to_s).to eq(force_binary expected)
+            expected = "\x02\x00\x00\x10abcdefghijkl".b
+            expect(sk.to_s).to eq(expected)
           end
         end
 
@@ -55,7 +55,7 @@ module PacketGen
             sk = SK.new
             str = sk.inspect
             expect(str).to be_a(String)
-            (sk.fields - %i(body)).each do |attr|
+            (sk.attributes - %i(body)).each do |attr|
                expect(str).to include(attr.to_s)
              end
           end
@@ -90,13 +90,13 @@ module PacketGen
             end
 
             it 'returns false on bad ICV' do
-              cbc_pkt.ike_sk[:content][-17] = force_binary("\xff")
+              cbc_pkt.ike_sk[:content][-17] = "\xff".b
               cbc_pkt.ike_sk.icv_length = 16
               expect(cbc_pkt.ike_sk.decrypt! cbc_cipher, intmode: hmac).to be(false)
             end
 
             it 'returns false on bad ICV (combined mode)' do
-              gcm_pkt.ike_sk[:content][-1] = force_binary("\xff")
+              gcm_pkt.ike_sk[:content][-1] = "\xff".b
               gcm_pkt.ike_sk.icv_length = 16
               expect(gcm_pkt.ike_sk.decrypt! gcm_cipher, salt: gcm_sk_ei[32..35]).
                 to be(false)

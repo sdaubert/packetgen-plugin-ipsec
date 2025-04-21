@@ -50,8 +50,8 @@ module PacketGen
           it 'returns a binary string' do
             ke = KE.new(next: 1, group: 'ECP256', content: 'abcdefghijkl')
             ke.calc_length
-            expected = "\x01\x00\x00\x14\x00\x13\x00\x00abcdefghijkl"
-            expect(ke.to_s).to eq(force_binary expected)
+            expected = "\x01\x00\x00\x14\x00\x13\x00\x00abcdefghijkl".b
+            expect(ke.to_s).to eq(expected)
           end
         end
 
@@ -60,7 +60,7 @@ module PacketGen
             ke = KE.new
             str = ke.inspect
             expect(str).to be_a(String)
-            (ke.fields - %i(body)).each do |attr|
+            (ke.attributes - %i(body)).each do |attr|
                expect(str).to include(attr.to_s)
              end
           end

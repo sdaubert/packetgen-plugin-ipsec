@@ -30,35 +30,33 @@ module PacketGen::Plugin
       # @!attribute next
       #  8-bit next payload
       #  @return [Integer]
-      define_field :next, PacketGen::Types::Int8
+      define_attr :next, BinStruct::Int8
       # @!attribute flags
       #  8-bit flags
       #  @return [Integer]
-      define_field :flags, PacketGen::Types::Int8
-      # @!attribute length
-      #  16-bit payload total length, including generic payload Plugin
-      #  @return [Integer]
-      define_field :length, PacketGen::Types::Int16
-      # @!attribute content
-      #  Payload content. Depends on payload. Variable length.
-      #  @return [String]
-      define_field :content, PacketGen::Types::String, builder: ->(h, t) { t.new(length_from: -> { h.length - h.offset_of(:content) }) }
-
-      # Defining a body permits using Packet#parse to parse next IKE payloads.
-      define_field :body, PacketGen::Types::String
-
       # @!attribute critical
       #  critical flag
       #  @return [Boolean]
       # @!attribute hreserved
       #  reserved part of {#flags} field
       #  @return [Integer]
-      define_bit_fields_on :flags, :critical, :hreserved, 7
+      define_bit_attr :flags, critical: 1, hreserved: 7
+      # @!attribute length
+      #  16-bit payload total length, including generic payload Plugin
+      #  @return [Integer]
+      define_attr :length, BinStruct::Int16
+      # @!attribute content
+      #  Payload content. Depends on payload. Variable length.
+      #  @return [String]
+      define_attr :content, BinStruct::String, builder: ->(h, t) { t.new(length_from: -> { h.length - h.offset_of(:content) }) }
+
+      # Defining a body permits using Packet#parse to parse next IKE payloads.
+      define_attr :body, BinStruct::String
 
       def initialize(options={})
         super
         if options[:content]
-          self[:content] = PacketGen::Types::String.new
+          self[:content] = BinStruct::String.new
           self[:content].read options[:content]
         end
         calc_length unless options[:length]

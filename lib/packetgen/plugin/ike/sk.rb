@@ -29,7 +29,7 @@ module PacketGen::Plugin
     #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     #   ~                    Integrity Checksum Data                    ~
     #   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-    # Encrypted payloads are set in {#content} field, as a {PacketGen::Types::String}.
+    # Encrypted payloads are set in {#content} field, as a {BinStruct::String}.
     # All others fields are only set when decrypting a previously read SK
     # payload. They also may be set manually to encrypt IKE payloads.
     #
@@ -95,7 +95,7 @@ module PacketGen::Plugin
         opt = { salt: '', parse: true }.merge!(options)
 
         set_crypto cipher, opt[:intmode]
-        iv = compute_iv_for_decrypting(force_binary(opt[:salt]), self[:content])
+        iv = compute_iv_for_decrypting(opt[:salt].b, self[:content])
 
         if authenticated?
           if @icv_length.zero?
@@ -138,7 +138,7 @@ module PacketGen::Plugin
         self[:content].read(iv + encrypted_msg)
 
         # Remove plain payloads
-        self[:body] = PacketGen::Types::String.new
+        self[:body] = BinStruct::String.new
 
         remove_enciphered_packets
         self.calc_length
@@ -163,7 +163,7 @@ module PacketGen::Plugin
 
       def encrypt_body(iv, opt) # rubocop:disable Naming/MethodParameterName
         padding, pad_length = compute_padding(iv, opt)
-        msg = self[:body].to_s + padding + PacketGen::Types::Int8.new(pad_length).to_s
+        msg = self[:body].to_s + padding.b + BinStruct::Int8.new(value: pad_length).to_s
         encrypted_msg = encipher(msg)
         @conf.final # message is already padded. No need for mode padding
         encrypted_msg
@@ -172,10 +172,10 @@ module PacketGen::Plugin
       def compute_padding(iv, opt) # rubocop:disable Naming/MethodParameterName
         if opt[:pad_length]
           pad_length = opt[:pad_length]
-          padding = force_binary(opt[:padding] || ([0] * pad_length).pack('C*'))
+          padding = opt[:padding] || ([0] * pad_length).pack('C*')
         else
           pad_length = compute_pad_length(iv)
-          padding = force_binary(opt[:padding] || ([0] * pad_length).pack('C*'))
+          padding = opt[:padding] || ([0] * pad_length).pack('C*')
           padding = padding[0, pad_length]
         end
         [padding, pad_length]
@@ -240,7 +240,7 @@ module PacketGen::Plugin
       end
 
       def remove_padding(msg)
-        pad_len = PacketGen::Types::Int8.new.read(msg[-1]).to_i
+        pad_len = BinStruct::Int8.new.read(msg[-1]).to_i
         msg[0, msg.size - 1 - pad_len]
       end
 
