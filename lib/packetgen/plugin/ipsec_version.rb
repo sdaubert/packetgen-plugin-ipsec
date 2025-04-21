@@ -8,6 +8,6 @@
 module PacketGen
   module Plugin
     # Version of ipsec plugin
-    IPSEC_VERSION = '1.0.3'
+    IPSEC_VERSION = '1.1.0'
   end
 end

@@ -3,12 +3,14 @@
 
 # packetgen-plugin-ipsec
 
-**Warning:** this repository is a work-in-progress. It will be available with packetgen3.
-
 This is a plugin for [PacketGen gem](https://github.com/sdaubert/packetgen). It adds two protocols:
 
 * `PacketGen::Plugin::ESP`: IP Encapsulating Security Payload ([RFC 4303](https://tools.ietf.org/html/rfc4303)),
 * `PacketGen::Plugin::IKE`: Internet Key Exchange v2 ([RFC 7296](https://tools.ietf.org/html/rfc7296)).
+
+Versions 1.0.x are compatible with PacketGen 3.x.
+
+Versions 1.1.x are compatible with PacketGen 4.x.
 
 ## Installation
 
@@ -20,11 +22,15 @@ gem 'packetgen-plugin-ipsec'
 
 And then execute:
 
-    $ bundle
+```bash
+bundle
+```
 
 Or install it yourself as:
 
-    $ gem install packetgen-plugin-ipsec
+```bash
+gem install packetgen-plugin-ipsec
+```
 
 ## Usage
 
@@ -86,7 +92,7 @@ pkt.to_w
 
 ## See also
 
-API documentation: http://www.rubydoc.info/gems/packetgen-plugin-ipsec
+API documentation: <http://www.rubydoc.info/gems/packetgen-plugin-ipsec>
 
 ## License
 
@@ -94,4 +100,4 @@ MIT License (see [LICENSE](https://github.com/sdaubert/packetgen-plugin-ipsec/bl
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/sdaubert/packetgen-plugin-ipsec.
+Bug reports and pull requests are welcome on GitHub at <https://github.com/sdaubert/packetgen-plugin-ipsec>.
