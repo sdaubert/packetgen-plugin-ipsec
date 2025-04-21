@@ -100,7 +100,7 @@ module PacketGen::Plugin
     # @param [String] salt salt to use
     # @return [void]
     def compute_iv_for_encrypting(iv, salt) # rubocop:disable Naming/MethodParameterName
-      real_iv = force_binary(salt) + force_binary(iv)
+      real_iv = salt.b + iv.b
       real_iv += [1].pack('N') if confidentiality_mode == 'ctr'
       @conf.iv = real_iv
     end

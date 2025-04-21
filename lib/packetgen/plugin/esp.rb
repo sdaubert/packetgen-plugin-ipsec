@@ -140,11 +140,11 @@ module PacketGen::Plugin
     def read(str)
       return self if str.nil?
 
-      force_binary str
-      self[:spi].read str[0, 4]
-      self[:sn].read str[4, 4]
-      self[:tfc].read ''
-      self[:padding].read ''
+      str = str.b
+      self[:spi].read(str[0, 4])
+      self[:sn].read(str[4, 4])
+      self[:tfc].read('')
+      self[:padding].read('')
 
       read_icv_dependent_fields(str[8..-1])
       read_icv(str)
@@ -239,7 +239,7 @@ module PacketGen::Plugin
     def get_auth_data(opt)
       ad = self[:spi].to_s
       if opt[:esn]
-        @esn = BinStruct::Int32.new(opt[:esn])
+        @esn = BinStruct::Int32.new(value: opt[:esn])
         ad << @esn.to_s if @conf.authenticated?
       end
       ad << self[:sn].to_s
@@ -273,12 +273,12 @@ module PacketGen::Plugin
     def encrypt_set_padding(opt)
       if opt[:pad_length]
         self.pad_length = opt[:pad_length]
-        padding = force_binary(opt[:padding] || (1..self.pad_length).to_a.pack('C*'))
-        self[:padding].read padding
+        padding = opt[:padding] || (1..self.pad_length).to_a.pack('C*')
       else
-        padding = force_binary(opt[:padding] || (1..self.pad_length).to_a.pack('C*'))
-        self[:padding].read padding[0...self.pad_length]
+        padding = opt[:padding] || (1..self.pad_length).to_a.pack('C*')
+        padding = padding[0...self.pad_length]
       end
+      self[:padding].read(padding)
     end
 
     def generate_tfc(opt)
@@ -293,7 +293,7 @@ module PacketGen::Plugin
                    else
                      (tfc_size / 4) * 4
                    end
-        tfc = force_binary("\0" * tfc_size)
+        tfc = "\0".b * tfc_size
       end
       tfc
     end

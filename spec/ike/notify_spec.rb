@@ -78,8 +78,8 @@ module PacketGen
             notify = Notify.new(next: 2, protocol: 'AH', type: 'COOKIE',
                                 spi: 'yz', content: 'abcdefghijkl')
             notify.calc_length
-            expected = "\x02\x00\x00\x16\x02\x02\x40\x06yzabcdefghijkl"
-            expect(notify.to_s).to eq(force_binary expected)
+            expected = "\x02\x00\x00\x16\x02\x02\x40\x06yzabcdefghijkl".b
+            expect(notify.to_s).to eq(expected)
           end
         end
 
@@ -88,7 +88,7 @@ module PacketGen
             notify = Notify.new
             str = notify.inspect
             expect(str).to be_a(String)
-            (notify.fields - %i(body)).each do |attr|
+            (notify.attributes - %i(body)).each do |attr|
                expect(str).to include(attr.to_s)
              end
           end

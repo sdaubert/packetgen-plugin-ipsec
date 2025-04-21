@@ -64,13 +64,13 @@ module PacketGen
           it 'returns a binary string for TLV Attribute' do
             attr = Attribute.new(type: 12, value: 0x01234567)
             expected = [12, 8, 0x01234567].pack('nnN')
-            expect(attr.to_s).to eq(force_binary expected)
+            expect(attr.to_s).to eq(expected)
           end
 
           it 'returns a binary string for TV Attribute' do
             attr = Attribute.new(type: 0x8012, value: 0x01234567)
             expected = [0x8012, 0x4567].pack('nn')
-            expect(attr.to_s).to eq(force_binary expected)
+            expect(attr.to_s).to eq(expected)
           end
 
         end
@@ -92,7 +92,7 @@ module PacketGen
 
       describe Transform do
         before(:each) do
-          @str = force_binary("\x03\x00\x00\f\x01\x00\x00\x14\x80\x0E\x01\x00")
+          @str = "\x03\x00\x00\f\x01\x00\x00\x14\x80\x0E\x01\x00".b
           @trans = Transform.new.read(@str)
         end
 

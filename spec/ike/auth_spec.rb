@@ -70,8 +70,8 @@ module PacketGen
           it 'returns a binary string' do
             auth = Auth.new(next: 2, auth_method: 'PASSWORD', content: 'abcd')
             auth.calc_length
-            expected = "\x02\x00\x00\x0c\x0c\x00\x00\x00abcd"
-            expect(auth.to_s).to eq(force_binary expected)
+            expected = "\x02\x00\x00\x0c\x0c\x00\x00\x00abcd".b
+            expect(auth.to_s).to eq(expected)
           end
         end
 

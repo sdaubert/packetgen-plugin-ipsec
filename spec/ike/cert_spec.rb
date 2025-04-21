@@ -69,8 +69,8 @@ module PacketGen
           it 'returns a binary string' do
             cert = Cert.new(next: 2, encoding: 'X509_CERT_SIG', content: 'abcd')
             cert.calc_length
-            expected = "\x02\x00\x00\x09\x04abcd"
-            expect(cert.to_s).to eq(force_binary expected)
+            expected = "\x02\x00\x00\x09\x04abcd".b
+            expect(cert.to_s).to eq(expected)
           end
         end
 
@@ -79,7 +79,7 @@ module PacketGen
             cert = Cert.new
             str = cert.inspect
             expect(str).to be_a(String)
-            (cert.fields - %i(body)).each do |attr|
+            (cert.attributes - %i(body)).each do |attr|
                expect(str).to include(attr.to_s)
              end
           end

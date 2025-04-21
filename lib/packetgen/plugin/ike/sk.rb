@@ -95,7 +95,7 @@ module PacketGen::Plugin
         opt = { salt: '', parse: true }.merge!(options)
 
         set_crypto cipher, opt[:intmode]
-        iv = compute_iv_for_decrypting(force_binary(opt[:salt]), self[:content])
+        iv = compute_iv_for_decrypting(opt[:salt].b, self[:content])
 
         if authenticated?
           if @icv_length.zero?
@@ -163,7 +163,7 @@ module PacketGen::Plugin
 
       def encrypt_body(iv, opt) # rubocop:disable Naming/MethodParameterName
         padding, pad_length = compute_padding(iv, opt)
-        msg = self[:body].to_s + padding + BinStruct::Int8.new(pad_length).to_s
+        msg = self[:body].to_s + padding.b + BinStruct::Int8.new(value: pad_length).to_s
         encrypted_msg = encipher(msg)
         @conf.final # message is already padded. No need for mode padding
         encrypted_msg
@@ -172,10 +172,10 @@ module PacketGen::Plugin
       def compute_padding(iv, opt) # rubocop:disable Naming/MethodParameterName
         if opt[:pad_length]
           pad_length = opt[:pad_length]
-          padding = force_binary(opt[:padding] || ([0] * pad_length).pack('C*'))
+          padding = opt[:padding] || ([0] * pad_length).pack('C*')
         else
           pad_length = compute_pad_length(iv)
-          padding = force_binary(opt[:padding] || ([0] * pad_length).pack('C*'))
+          padding = opt[:padding] || ([0] * pad_length).pack('C*')
           padding = padding[0, pad_length]
         end
         [padding, pad_length]

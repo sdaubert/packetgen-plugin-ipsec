@@ -45,8 +45,8 @@ module PacketGen
           it 'returns a binary string' do
             nonce = Nonce.new(next: 2, content: 'abcdefghijkl')
             nonce.calc_length
-            expected = "\x02\x00\x00\x10abcdefghijkl"
-            expect(nonce.to_s).to eq(force_binary expected)
+            expected = "\x02\x00\x00\x10abcdefghijkl".b
+            expect(nonce.to_s).to eq(expected)
           end
         end
 
@@ -55,7 +55,7 @@ module PacketGen
             nonce = Nonce.new
             str = nonce.inspect
             expect(str).to be_a(String)
-            (nonce.fields - %i(body)).each do |attr|
+            (nonce.attributes - %i(body)).each do |attr|
                expect(str).to include(attr.to_s)
              end
           end
