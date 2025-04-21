@@ -64,7 +64,7 @@ module PacketGen::Plugin
       def to_human
         name = self.class.constants.grep(/TYPE_/)
                    .detect { |c| self.class.const_get(c) == (type & 0x7fff) } || "attr[#{type & 0x7fff}]"
-        name = name.to_s.sub(/TYPE_/, '')
+        name = name.to_s.sub('TYPE_', '')
         "#{name}=#{value}"
       end
 
@@ -315,7 +315,7 @@ module PacketGen::Plugin
       # Get a human readable string
       # @return [String]
       def to_human
-        h = +"#{human_type}(#{human_id}"
+        h = "#{human_type}(#{human_id}"
         h << ",#{tattributes.to_human}" unless tattributes.empty?
 
         h << ')'
@@ -459,7 +459,7 @@ module PacketGen::Plugin
       # Get a human readable string
       # @return [String]
       def to_human
-        str = +"##{num} #{human_protocol}"
+        str = "##{num} #{human_protocol}"
         case spi_size
         when 4
           str << ('(spi:0x%08x)' % BinStruct::Int32.new.read(spi).to_i)

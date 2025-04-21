@@ -146,7 +146,7 @@ module PacketGen::Plugin
       self[:tfc].read('')
       self[:padding].read('')
 
-      read_icv_dependent_fields(str[8..-1])
+      read_icv_dependent_fields(str[8..])
       read_icv(str)
       self
     end

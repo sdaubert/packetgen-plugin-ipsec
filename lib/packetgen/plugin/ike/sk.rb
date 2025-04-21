@@ -247,7 +247,7 @@ module PacketGen::Plugin
       def parse_ike_payloads(payloads)
         klass = IKE.constants.select do |c|
           cst = IKE.const_get(c)
-          cst.is_a?(Class) && (cst < Payload) && (cst::PAYLOAD_TYPE == self.next)
+          cst.is_a?(Class) && (cst < Payload) && (self.next == cst::PAYLOAD_TYPE)
         end
         klass = klass.nil? ? Payload : IKE.const_get(klass.first)
         firsth = klass.protocol_name

@@ -241,7 +241,7 @@ module PacketGen::Plugin
       #  Set of {TrafficSelector}
       #  @return {TrafficSelectors}
       define_attr_before :body, :traffic_selectors, TrafficSelectors,
-                          builder: ->(h, t) { t.new(counter: h[:num_ts]) }
+                         builder: ->(h, t) { t.new(counter: h[:num_ts]) }
       alias selectors traffic_selectors
 
       # Compute length and set {#length} field

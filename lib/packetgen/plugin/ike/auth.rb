@@ -113,7 +113,7 @@ module PacketGen::Plugin
              Transform::PRF_HMAC_SHA2_512
           digestname = Transform.constants.grep(/PRF_/)
                                 .detect { |c| Transform.const_get(c) == type }
-                                .to_s.sub(/^PRF_HMAC_/, '').sub(/2_/, '')
+                                .to_s.sub(/^PRF_HMAC_/, '').sub('2_', '')
           digest = OpenSSL::Digest.const_get(digestname).new
         else
           raise NotImplementedError, 'for now, only HMAC-based PRF are supported'

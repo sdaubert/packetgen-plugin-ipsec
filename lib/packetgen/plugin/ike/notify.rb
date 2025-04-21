@@ -111,7 +111,7 @@ module PacketGen::Plugin
       #   this field is not present in the proposal.
       #   @return [String]
       define_attr_before :content, :spi, BinStruct::String,
-                          builder: ->(h, t) { t.new(length_from: h[:spi_size]) }
+                         builder: ->(h, t) { t.new(length_from: h[:spi_size]) }
 
       alias type message_type
 

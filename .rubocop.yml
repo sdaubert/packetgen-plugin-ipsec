@@ -1,7 +1,7 @@
-require:
+plugins:
   - rubocop-performance
 AllCops:
-  TargetRubyVersion: '2.5'
+  TargetRubyVersion: "3.0"
   NewCops: enable
   Exclude:
     - .git/**/*
@@ -16,11 +16,11 @@ Lint/EmptyWhen:
 Lint/Void:
   Enabled: false
 Metrics/AbcSize:
-    Max: 20
+  Max: 20
 Metrics/ClassLength:
-    Max: 200
+  Max: 200
 Metrics/MethodLength:
-    Max: 20
+  Max: 20
 Metrics/ParameterLists:
   MaxOptionalParameters: 4
 Naming/FileName:

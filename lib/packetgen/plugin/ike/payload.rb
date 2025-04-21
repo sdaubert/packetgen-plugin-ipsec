@@ -285,19 +285,19 @@ module PacketGen::Plugin # rubocop:disable Metrics/ModuleLength
   IKE::TSr.bind IKE::VendorID, next: IKE::VendorID::PAYLOAD_TYPE
 
   # Last defined. To be used as default if no other may be parsed.
-  IKE::SA.bind IKE::Payload, next: ->(v) { v.positive? }
-  IKE::KE.bind IKE::Payload, next: ->(v) { v.positive? }
-  IKE::Nonce.bind IKE::Payload, next: ->(v) { v.positive? }
-  IKE::Notify.bind IKE::Payload, next: ->(v) { v.positive? }
-  IKE::SK.bind IKE::Payload, next: ->(v) { v.positive? }
-  IKE::IDi.bind IKE::Payload, next: ->(v) { v.positive? }
-  IKE::IDr.bind IKE::Payload, next: ->(v) { v.positive? }
-  IKE::Cert.bind IKE::Payload, next: ->(v) { v.positive? }
-  IKE::CertReq.bind IKE::Payload, next: ->(v) { v.positive? }
-  IKE::Auth.bind IKE::Payload, next: ->(v) { v.positive? }
-  IKE::TSi.bind IKE::Payload, next: ->(v) { v.positive? }
-  IKE::TSr.bind IKE::Payload, next: ->(v) { v.positive? }
-  IKE::VendorID.bind IKE::Payload, next: ->(v) { v.positive? }
-  IKE.bind IKE::Payload, next: ->(v) { v.positive? }
-  IKE::Payload.bind IKE::Payload, next: ->(v) { v.positive? }
+  IKE::SA.bind IKE::Payload, next: lambda(&:positive?)
+  IKE::KE.bind IKE::Payload, next: lambda(&:positive?)
+  IKE::Nonce.bind IKE::Payload, next: lambda(&:positive?)
+  IKE::Notify.bind IKE::Payload, next: lambda(&:positive?)
+  IKE::SK.bind IKE::Payload, next: lambda(&:positive?)
+  IKE::IDi.bind IKE::Payload, next: lambda(&:positive?)
+  IKE::IDr.bind IKE::Payload, next: lambda(&:positive?)
+  IKE::Cert.bind IKE::Payload, next: lambda(&:positive?)
+  IKE::CertReq.bind IKE::Payload, next: lambda(&:positive?)
+  IKE::Auth.bind IKE::Payload, next: lambda(&:positive?)
+  IKE::TSi.bind IKE::Payload, next: lambda(&:positive?)
+  IKE::TSr.bind IKE::Payload, next: lambda(&:positive?)
+  IKE::VendorID.bind IKE::Payload, next: lambda(&:positive?)
+  IKE.bind IKE::Payload, next: lambda(&:positive?)
+  IKE::Payload.bind IKE::Payload, next: lambda(&:positive?)
 end
